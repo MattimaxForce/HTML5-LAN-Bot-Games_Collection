@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rival Realms: RPG Tycoon & Sabotage</title>
+  <style>
+    :root {
+      --parchment: #f4ece1;
+      --parchment-dark: #e2d2bc;
+      --wood-dark: #3a2618;
+      --wood-med: #5c3d28;
+      --wood-light: #8c6244;
+      --gold: #d99b26;
+      --gold-light: #f5b942;
+      --crimson: #b83227;
+      --emerald: #2e7d32;
+      --sapphire: #1976d2;
+      --amethyst: #7b1fa2;
+      --text-dark: #24170e;
+      --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: #1b120c;
+      background-image: radial-gradient(circle at center, #2e2016 0%, #140d08 100%);
+      color: var(--text-dark);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game-wrapper {
+      position: relative;
+      width: 1200px;
+      max-width: 98vw;
+      height: 760px;
+      max-height: 96vh;
+      background: var(--parchment);
+      border: 6px solid var(--wood-dark);
+      border-radius: 14px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), inset 0 0 0 3px var(--wood-light);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* SCHERMATE UI */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      background: var(--parchment);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 10;
+    }
+
+    .screen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .rpg-title {
+      font-size: 3rem;
+      font-weight: 900;
+      color: var(--wood-dark);
+      text-shadow: 2px 2px 0px var(--gold-light);
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .rpg-subtitle {
+      font-size: 1.05rem;
+      color: var(--wood-med);
+      margin-bottom: 28px;
+      max-width: 600px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .rpg-box {
+      background: var(--parchment-dark);
+      border: 3px solid var(--wood-med);
+      border-radius: 10px;
+      padding: 20px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 16px;
+    }
+
+    .btn-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 340px;
+    }
+
+    button {
+      font-family: var(--font-main);
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 12px 20px;
+      border: 3px solid var(--wood-dark);
+      border-radius: 8px;
+      background: var(--gold);
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+      cursor: pointer;
+      box-shadow: 0 4px 0 var(--wood-dark);
+      transition: transform 0.1s, background 0.15s;
+    }
+
+    button:hover {
+      background: var(--gold-light);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 var(--wood-dark);
+    }
+
+    button.btn-green { background: var(--emerald); }
+    button.btn-green:hover { background: #388e3c; }
+
+    button.btn-red { background: var(--crimson); }
+    button.btn-red:hover { background: #d32f2f; }
+
+    button.btn-wood {
+      background: var(--wood-light);
+      color: var(--parchment);
+    }
+    button.btn-wood:hover { background: var(--wood-med); }
+
+    textarea {
+      width: 100%;
+      height: 60px;
+      border: 2px solid var(--wood-light);
+      border-radius: 6px;
+      padding: 6px;
+      font-family: monospace;
+      font-size: 0.75rem;
+      background: #fff;
+      resize: none;
+      margin: 4px 0 10px 0;
+    }
+
+    /* HUD DI GIOCO */
+    #screen-game {
+      padding: 0;
+      justify-content: flex-start;
+      background: #2b4c24;
+    }
+
+    .hud-top {
+      width: 100%;
+      height: 62px;
+      background: var(--wood-dark);
+      color: var(--parchment);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 4px solid var(--wood-light);
+      z-index: 20;
+    }
+
+    .hud-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .stat-badge {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid var(--wood-light);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .race-tracker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 300px;
+    }
+
+    .race-bar {
+      width: 100%;
+      height: 14px;
+      background: #1a110a;
+      border: 2px solid var(--wood-light);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 3px;
+    }
+
+    .race-fill-p1 {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      background: #3b82f6;
+      transition: width 0.2s;
+    }
+
+    .race-fill-p2 {
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      background: #ef4444;
+      transition: width 0.2s;
+    }
+
+    .canvas-area {
+      position: relative;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hud-bottom {
+      width: 100%;
+      height: 36px;
+      background: var(--wood-med);
+      color: var(--parchment);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-top: 2px solid var(--wood-light);
+    }
+
+    .key-hint {
+      background: var(--wood-dark);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--gold);
+      color: var(--gold-light);
+      font-weight: 800;
+    }
+
+    /* NOTIFICA EVENTI / SABOTAGGIO */
+    #toast-alert {
+      position: absolute;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(36, 23, 14, 0.92);
+      color: #fff;
+      border: 2px solid var(--gold);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s;
+      z-index: 30;
+    }
+
+    .peer-list-badge {
+      display: inline-block;
+      background: var(--emerald);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-wrapper">
+
+  <!-- 1. MENU PRINCIPALE -->
+  <div id="screen-menu" class="screen active">
+    <div class="rpg-title">RIVAL REALMS</div>
+    <p class="rpg-subtitle">
+      Esplora la tua tenuta in stile RPG, raccogli i cristalli dalla Fonte, forgia oro, assumi operai e cammina sugli Altari Maledetti per sabotare gli avversari!
+    </p>
+    <div class="btn-list">
+      <button class="btn-green" onclick="Game.startVsBot()">Gioca vs BOT (Split-Screen)</button>
+      <button onclick="Game.showScreen('screen-lan-role')">Multiplayer LAN (2+ Giocatori)</button>
+    </div>
+  </div>
+
+  <!-- 2. SCELTA RUOLO LAN -->
+  <div id="screen-lan-role" class="screen">
+    <div class="rpg-title" style="font-size: 2.2rem;">Multiplayer LAN P2P</div>
+    <p class="rpg-subtitle">In modalità LAN giochi a Schermo Intero sulla tua tenuta e puoi sabotare gli altri giocatori in tempo reale.</p>
+    <div class="btn-list">
+      <button onclick="Game.initLanHost()">Crea Partita (Host)</button>
+      <button class="btn-wood" onclick="Game.initLanClient()">Unisciti a Partita (Client)</button>
+      <button class="btn-wood" onclick="Game.showScreen('screen-menu')">Indietro</button>
+    </div>
+  </div>
+
+  <!-- 3. LOBBY P2P MULTI-GIOCATORE -->
+  <div id="screen-lan-lobby" class="screen">
+    <div class="rpg-title" style="font-size: 1.9rem;" id="lobby-title">Sala d'Attesa LAN</div>
+
+    <!-- PANNELLO HOST (Supporta aggiunta di più giocatori) -->
+    <div id="lan-host-ui" class="rpg-box" style="display:none;">
+      <div style="margin-bottom: 8px; font-weight:800;">
+        Giocatori Connessi: <span id="host-peers-count">1 (Solo Tu)</span>
+      </div>
+      <p style="font-size:0.82rem; margin-bottom:4px;">1. Genera un invito per un nuovo giocatore e inviaglielo:</p>
+      <button style="padding:6px 12px; font-size:0.85rem; margin-bottom:6px;" onclick="Game.hostCreateOfferSlot()">+ Genera Nuovo Codice Invito</button>
+      <textarea id="host-offer-out" readonly placeholder="Clicca 'Genera Nuovo Codice Invito'..." onclick="this.select()"></textarea>
+      
+      <p style="font-size:0.82rem; margin-bottom:4px;">2. Incolla la Risposta del giocatore per farlo entrare:</p>
+      <textarea id="host-answer-in" placeholder="Incolla qui la risposta del client..."></textarea>
+      <div style="display:flex; gap:10px;">
+        <button style="flex:1;" onclick="Game.hostConfirmClientAnswer()">Accetta Giocatore</button>
+        <button class="btn-green" style="flex:1;" id="btn-host-start" onclick="Game.hostStartMultiplayerMatch()">Avvia Partita!</button>
+      </div>
+    </div>
+
+    <!-- PANNELLO CLIENT -->
+    <div id="lan-client-ui" class="rpg-box" style="display:none;">
+      <p style="font-size:0.82rem; font-weight:700;">1. Incolla il Codice Invito ricevuto dall'Host:</p>
+      <textarea id="client-offer-in" placeholder="Incolla codice invito..."></textarea>
+      <button style="width:100%; margin-bottom:10px;" onclick="Game.clientProcessOffer()">Genera Codice Risposta</button>
+      <p style="font-size:0.82rem; font-weight:700;">2. Copia questa risposta e inviala all'Host:</p>
+      <textarea id="client-answer-out" readonly onclick="this.select()"></textarea>
+      <p id="client-status-msg" style="font-size:0.85rem; font-weight:800; color:var(--emerald); text-align:center;">In attesa di connessione...</p>
+    </div>
+
+    <button class="btn-wood" onclick="Game.cancelLan()">Annulla e Torna al Menu</button>
+  </div>
+
+  <!-- 4. AREA DI GIOCO PRINCIPALE -->
+  <div id="screen-game" class="screen">
+    <div class="hud-top">
+      <div class="hud-group">
+        <div class="stat-badge" style="border-color:#60a5fa;">🧙‍♂️ <span id="hud-my-name">Tu</span></div>
+        <div class="stat-badge">🪙 Oro: <span id="hud-my-gold">0</span></div>
+        <div class="stat-badge">💎 Zaino: <span id="hud-my-bag">0/5</span></div>
+        <div class="stat-badge" style="color:#facc15;">🔥 Rinascite: <span id="hud-my-rebirth">0</span> (x<span id="hud-my-mult">1</span>)</div>
+      </div>
+
+      <div class="race-tracker">
+        <div style="font-size: 0.72rem; font-weight: 800; letter-spacing: 0.5px;">CORSA ALLA CORONA: 5.000 ORO (O 3 RINASCITE)</div>
+        <div class="race-bar">
+          <div class="race-fill-p1" id="bar-p1" style="width:0%"></div>
+          <div class="race-fill-p2" id="bar-p2" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="hud-group">
+        <div class="stat-badge" style="border-color:#f87171;">⚔️ <span id="hud-rival-name">Rivale</span></div>
+        <div class="stat-badge">🪙 <span id="hud-rival-gold">0</span></div>
+        <div class="stat-badge">🔥 Rinascite: <span id="hud-rival-rebirth">0</span></div>
+      </div>
+    </div>
+
+    <div id="toast-alert">Attenzione!</div>
+
+    <div class="canvas-area">
+      <canvas id="worldCanvas" width="1188" height="650"></canvas>
+    </div>
+
+    <div class="hud-bottom">
+      <div><span class="key-hint">WASD</span> o <span class="key-hint">FRECCE</span> Muovi l'Eroe</div>
+      <div><span class="key-hint">SPAZIO</span> Attacca con la Spada (Uccidi Goblin Ladri & Spacca Massi)</div>
+      <div>💡 <i>Cammina sopra i Cerchi Magici per comprare Upgrade o lanciare Sabotaggi!</i></div>
+    </div>
+  </div>
+
+  <!-- 5. SCHERMATA DI FINE PARTITA -->
+  <div id="screen-gameover" class="screen">
+    <div class="rpg-title" id="over-title">Vittoria Reale!</div>
+    <p class="rpg-subtitle" id="over-desc">Il regno ha raggiunto la supremazia economica e militare.</p>
+    <div class="rpg-box" id="over-stats" style="text-align:center; font-size:1.05rem; line-height:1.8;"></div>
+    <div class="btn-list">
+      <button class="btn-green" onclick="Game.requestRematch()">Rivincita Immediata</button>
+      <button class="btn-wood" onclick="Game.backToMenu()">Torna al Menu Principale</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/**
+ * ============================================================================
+ * ARCHITETTURA DEL GIOCO "RIVAL REALMS: RPG TYCOON & SABOTAGE"
+ * - 1. RealmWorld: Simula una singola tenuta RPG (680x620) con eroe, spada,
+ *      generatore di cristalli, fucina, alberi d'oro, operai PNG, goblin ladri,
+ *      rocce ostacolo e pad fisici calpestabili per acquisti e sabotaggi.
+ * - 2. BotBrain: IA che muove fisicamente il personaggio del Bot sulla sua mappa,
+ *      raccoglie cristalli, li deposita, si difende dai Goblin con la spada,
+ *      compra potenziamenti e sabota il giocatore umano.
+ * - 3. MultiPeerNetwork: Gestore WebRTC P2P Zero-Server (1 Host -> N Client).
+ * - 4. Game: Motore di rendering (Split-Screen vs Bot / Full-Screen in LAN).
+ * ============================================================================
+ */
+
+const WORLD_W = 680;
+const WORLD_H = 620;
+const WIN_GOLD = 5000;
+const WIN_REBIRTHS = 3;
+
+// --- 1. CLASSE TENUTA RPG (REALM WORLD) ---
+class RealmWorld {
+  constructor(id, name, color, isBot = false) {
+    this.id = id;
+    this.name = name;
+    this.color = color;
+    this.isBot = isBot;
+    this.reset();
+  }
+
+  reset() {
+    this.gold = 40;
+    this.rebirths = 0;
+    this.multiplier = 1;
+    this.sabotagesSent = 0;
+
+    // Eroe controllato dal giocatore/bot
+    this.hero = {
+      x: 340,
+      y: 320,
+      vx: 0,
+      vy: 0,
+      speed: 175,
+      bag: 0,
+      maxBag: 6,
+      facing: { x: 0, y: 1 },
+      attackTimer: 0,
+      attackCooldown: 0,
+      slowCurseTimer: 0
+    };
+
+    // Livelli Tycoon
+    this.spawnerLevel = 1;
+    this.helperCount = 0;
+    this.goldTrees = 0;
+    this.forgeLevel = 1;
+
+    // Entità dinamiche sulla mappa
+    this.crystals = [];      // Cristalli fisici a terra da raccogliere
+    this.helpers = [];       // PNG aiutanti che raccolgono da soli
+    this.goblins = [];       // Goblin ladri mandati dagli avversari
+    this.boulders = [];      // Massi mandati dagli avversari
+    this.floatingTexts = []; // Numeri fluttuanti (+Oro, Sabotaggio, ecc.)
+
+    this.spawnTimer = 0;
+    this.treeTimer = 0;
+    this.padCooldown = 0;
+
+    // Strutture Fisse sulla Mappa
+    this.wellPos = { x: 180, y: 190, r: 36 };   // Fonte di Cristalli (Nord-Ovest)
+    this.forgePos = { x: 490, y: 190, r: 38 };  // Fucina di Vendita (Nord-Est)
+
+    // Pad Calpestabili (Shop Tycoon + Altari Sabotaggio)
+    this.setupPads();
+
+    // Genera 4 cristalli iniziali senza sovrapposizioni
+    for (let i = 0; i < 4; i++) this.spawnCrystal();
+  }
+
+  setupPads() {
+    this.pads = [
+      // Riga Shop Tycoon (In basso)
+      { id: 'up_spawner', x: 110, y: 460, r: 26, title: 'Fonte +', color: '#2980b9', type: 'SHOP', getCost: () => Math.floor(25 * Math.pow(1.45, this.spawnerLevel - 1)) },
+      { id: 'up_bag',     x: 220, y: 460, r: 26, title: 'Zaino & Valore', color: '#27ae60', type: 'SHOP', getCost: () => Math.floor(35 * Math.pow(1.5, this.forgeLevel - 1)) },
+      { id: 'up_helper',  x: 330, y: 460, r: 26, title: '+ Operaio PNG', color: '#e67e22', type: 'SHOP', getCost: () => Math.floor(75 * Math.pow(1.65, this.helperCount)) },
+      { id: 'up_tree',    x: 440, y: 460, r: 26, title: '+ Albero Oro', color: '#f1c40f', type: 'SHOP', getCost: () => Math.floor(120 * Math.pow(1.6, this.goldTrees)) },
+      { id: 'rebirth',    x: 560, y: 460, r: 30, title: 'RINASCITA', color: '#8e44ad', type: 'REBIRTH', getCost: () => 1200 * (this.rebirths + 1) },
+
+      // Riga Altari del Sabotaggio (In basso al fondo, per "rompere le scatole")
+      { id: 'sab_goblin',  x: 200, y: 555, r: 25, title: '👹 Manda Goblin', color: '#c0392b', type: 'SABOTAGE', getCost: () => 60 },
+      { id: 'sab_boulder', x: 340, y: 555, r: 25, title: '🪨 Pioggia Massi', color: '#7f8c8d', type: 'SABOTAGE', getCost: () => 95 },
+      { id: 'sab_curse',   x: 480, y: 555, r: 25, title: '⚡ Rallenta Nemico', color: '#5b2c6f', type: 'SABOTAGE', getCost: () => 130 }
+    ];
+  }
+
+  addText(x, y, text, color = '#ffffff') {
+    this.floatingTexts.push({ x, y, text, color, life: 1.1 });
+  }
+
+  spawnCrystal() {
+    if (this.crystals.length >= 22) return;
+    for (let attempt = 0; attempt < 25; attempt++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 48 + Math.random() * 68;
+      const cx = this.wellPos.x + Math.cos(angle) * dist;
+      const cy = this.wellPos.y + Math.sin(angle) * dist;
+
+      // Verifica che non spawni sopra rocce o altri cristalli
+      const hitBoulder = this.boulders.some(b => Math.hypot(b.x - cx, b.y - cy) < b.r + 12);
+      const hitCrystal = this.crystals.some(c => Math.hypot(c.x - cx, c.y - cy) < 18);
+      if (!hitBoulder && !hitCrystal && cx > 40 && cx < WORLD_W - 40 && cy > 40 && cy < WORLD_H - 40) {
+        const isRare = Math.random() < 0.2 + (this.spawnerLevel * 0.03);
+        this.crystals.push({
+          x: cx,
+          y: cy,
+          val: isRare ? 3 : 1,
+          color: isRare ? '#a855f7' : '#38bdf8',
+          bob: Math.random() * 6
+        });
+        break;
+      }
+    }
+  }
+
+  triggerSwordAttack() {
+    if (this.hero.attackCooldown > 0) return;
+    this.hero.attackTimer = 0.22;
+    this.hero.attackCooldown = 0.42;
+
+    const reach = 42;
+    const hitX = this.hero.x + this.hero.facing.x * 26;
+    const hitY = this.hero.y + this.hero.facing.y * 26;
+
+    // Colpisci Goblin Ladri
+    for (let i = this.goblins.length - 1; i >= 0; i--) {
+      const g = this.goblins[i];
+      if (Math.hypot(g.x - hitX, g.y - hitY) < reach) {
+        g.hp -= 1;
+        g.x += this.hero.facing.x * 24;
+        g.y += this.hero.facing.y * 24;
+        if (g.hp <= 0) {
+          const reward = 25 * this.multiplier;
+          this.gold += reward;
+          this.addText(g.x, g.y, `Goblin Sconfitto! +${reward}🪙`, '#4ade80');
+          this.goblins.splice(i, 1);
+        } else {
+          this.addText(g.x, g.y, `Colpito!`, '#f87171');
+        }
+      }
+    }
+
+    // Spacca Massi Sabotaggio
+    for (let i = this.boulders.length - 1; i >= 0; i--) {
+      const b = this.boulders[i];
+      if (Math.hypot(b.x - hitX, b.y - hitY) < reach + b.r * 0.5) {
+        b.hp -= 1;
+        if (b.hp <= 0) {
+          this.addText(b.x, b.y, `Masso Distrutto!`, '#cbd5e1');
+          this.boulders.splice(i, 1);
+        } else {
+          this.addText(b.x, b.y, `Crack! (${b.hp})`, '#facc15');
+        }
+      }
+    }
+  }
+
+  receiveSabotage(sabType) {
+    if (sabType === 'sab_goblin') {
+      this.goblins.push({
+        x: WORLD_W / 2,
+        y: 60,
+        hp: 2,
+        stealCooldown: 0
+      });
+      this.addText(this.hero.x, this.hero.y - 30, `⚠️ UN GOBLIN LADRO È ENTRATO NELLA TENUTA!`, '#ef4444');
+    } else if (sabType === 'sab_boulder') {
+      for (let i = 0; i < 4; i++) {
+        const ang = (Math.PI / 2) * i + 0.4;
+        this.boulders.push({
+          x: this.wellPos.x + Math.cos(ang) * 58,
+          y: this.wellPos.y + Math.sin(ang) * 58,
+          r: 22,
+          hp: 2
+        });
+      }
+      this.addText(this.wellPos.x, this.wellPos.y - 30, `🪨 PIOGGIA DI MASSI SULLA FONTE!`, '#f97316');
+    } else if (sabType === 'sab_curse') {
+      this.hero.slowCurseTimer = 7.0;
+      this.addText(this.hero.x, this.hero.y - 30, `⚡ MALEDIZIONE DEL FANGO (LENTO)!`, '#c084fc');
+    }
+  }
+
+  update(dt, onSabotageCallback) {
+    // 1. Timer Spawner di Cristalli
+    this.spawnTimer += dt;
+    const spawnInterval = Math.max(0.35, 2.1 - (this.spawnerLevel * 0.22));
+    if (this.spawnTimer >= spawnInterval) {
+      this.spawnTimer = 0;
+      this.spawnCrystal();
+    }
+
+    // 2. Rendita passiva Alberi d'Oro
+    if (this.goldTrees > 0) {
+      this.treeTimer += dt;
+      if (this.treeTimer >= 1.5) {
+        this.treeTimer = 0;
+        const passiveGold = Math.floor(this.goldTrees * 12 * this.multiplier);
+        this.gold += passiveGold;
+        this.addText(560, 130, `+${passiveGold}🪙`, '#facc15');
+      }
+    }
+
+    // 3. Movimento e Fisica dell'Eroe
+    if (this.hero.attackTimer > 0) this.hero.attackTimer -= dt;
+    if (this.hero.attackCooldown > 0) this.hero.attackCooldown -= dt;
+    if (this.hero.slowCurseTimer > 0) this.hero.slowCurseTimer -= dt;
+    if (this.padCooldown > 0) this.padCooldown -= dt;
+
+    const currentSpeed = this.hero.slowCurseTimer > 0 ? this.hero.speed * 0.48 : this.hero.speed;
+    let nx = this.hero.x + this.hero.vx * currentSpeed * dt;
+    let ny = this.hero.y + this.hero.vy * currentSpeed * dt;
+
+    if (Math.abs(this.hero.vx) > 0.01 || Math.abs(this.hero.vy) > 0.01) {
+      const mag = Math.hypot(this.hero.vx, this.hero.vy);
+      this.hero.facing = { x: this.hero.vx / mag, y: this.hero.vy / mag };
+    }
+
+    // Collisione con i Massi
+    this.boulders.forEach(b => {
+      const d = Math.hypot(nx - b.x, ny - b.y);
+      if (d < b.r + 14) {
+        const pushAngle = Math.atan2(ny - b.y, nx - b.x);
+        nx = b.x + Math.cos(pushAngle) * (b.r + 14);
+        ny = b.y + Math.sin(pushAngle) * (b.r + 14);
+      }
+    });
+
+    this.hero.x = Math.max(28, Math.min(WORLD_W - 28, nx));
+    this.hero.y = Math.max(28, Math.min(WORLD_H - 28, ny));
+
+    // 4. Raccolta Cristalli da terra
+    for (let i = this.crystals.length - 1; i >= 0; i--) {
+      const c = this.crystals[i];
+      if (Math.hypot(this.hero.x - c.x, this.hero.y - c.y) < 26) {
+        if (this.hero.bag < this.hero.maxBag) {
+          this.hero.bag = Math.min(this.hero.maxBag, this.hero.bag + c.val);
+          this.addText(c.x, c.y, `+${c.val} 💎`, '#38bdf8');
+          this.crystals.splice(i, 1);
+        }
+      }
+    }
+
+    // 5. Deposito alla Fucina
+    if (Math.hypot(this.hero.x - this.forgePos.x, this.hero.y - this.forgePos.y) < this.forgePos.r + 16) {
+      if (this.hero.bag > 0) {
+        const earned = Math.floor(this.hero.bag * (10 + this.forgeLevel * 6) * this.multiplier);
+        this.gold += earned;
+        this.hero.bag = 0;
+        this.addText(this.forgePos.x, this.forgePos.y - 20, `+${earned} 🪙!`, '#facc15');
+      }
+    }
+
+    // 6. Interazione con i Pad (Shop, Rebirth, Sabotaggi)
+    if (this.padCooldown <= 0) {
+      this.pads.forEach(pad => {
+        if (Math.hypot(this.hero.x - pad.x, this.hero.y - pad.y) < pad.r + 10) {
+          const cost = pad.getCost();
+          if (this.gold >= cost) {
+            this.gold -= cost;
+            this.padCooldown = 0.85; // Evita acquisti multipli involontari nello stesso frame
+
+            if (pad.id === 'up_spawner') {
+              this.spawnerLevel++;
+              this.addText(pad.x, pad.y - 15, `Fonte Lv.${this.spawnerLevel}!`, '#38bdf8');
+            } else if (pad.id === 'up_bag') {
+              this.forgeLevel++;
+              this.hero.maxBag += 3;
+              this.addText(pad.x, pad.y - 15, `Zaino & Fucina Lv.${this.forgeLevel}!`, '#4ade80');
+            } else if (pad.id === 'up_helper') {
+              this.helperCount++;
+              this.helpers.push({ x: 340, y: 240, bag: 0, state: 'COLLECT' });
+              this.addText(pad.x, pad.y - 15, `Nuovo Operaio Evocato!`, '#fb923c');
+            } else if (pad.id === 'up_tree') {
+              this.goldTrees++;
+              this.addText(pad.x, pad.y - 15, `Albero d'Oro Piantato!`, '#facc15');
+            } else if (pad.id === 'rebirth') {
+              this.performRebirth();
+            } else if (pad.type === 'SABOTAGE') {
+              this.sabotagesSent++;
+              this.addText(pad.x, pad.y - 20, `Sabotaggio Lanciato!`, '#f87171');
+              if (onSabotageCallback) onSabotageCallback(pad.id, this.name);
+            }
+          }
+        }
+      });
+    }
+
+    // 7. Logica PNG Operai Aiutanti
+    this.helpers.forEach(h => {
+      const hSpeed = 95 * dt;
+      if (h.state === 'COLLECT') {
+        if (this.crystals.length > 0) {
+          const target = this.crystals[0];
+          const dx = target.x - h.x;
+          const dy = target.y - h.y;
+          const d = Math.hypot(dx, dy);
+          if (d < 14) {
+            h.bag = target.val;
+            this.crystals.splice(0, 1);
+            h.state = 'DEPOSIT';
+          } else {
+            h.x += (dx / d) * hSpeed;
+            h.y += (dy / d) * hSpeed;
+          }
+        }
+      } else {
+        const dx = this.forgePos.x - h.x;
+        const dy = this.forgePos.y - h.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 20) {
+          const gain = Math.floor(h.bag * (8 + this.forgeLevel * 4) * this.multiplier);
+          this.gold += gain;
+          h.bag = 0;
+          h.state = 'COLLECT';
+          this.addText(this.forgePos.x, this.forgePos.y, `+${gain}🪙`, '#fde047');
+        } else {
+          h.x += (dx / d) * hSpeed;
+          h.y += (dy / d) * hSpeed;
+        }
+      }
+    });
+
+    // 8. Logica Goblin Ladri Ostili
+    this.goblins.forEach(g => {
+      if (g.stealCooldown > 0) g.stealCooldown -= dt;
+      const dx = this.hero.x - g.x;
+      const dy = this.hero.y - g.y;
+      const d = Math.hypot(dx, dy);
+      const gSpeed = 115 * dt;
+
+      if (d > 14) {
+        g.x += (dx / d) * gSpeed;
+        g.y += (dy / d) * gSpeed;
+      } else if (g.stealCooldown <= 0) {
+        g.stealCooldown = 1.6;
+        if (this.hero.bag > 0) {
+          this.hero.bag = Math.max(0, this.hero.bag - 2);
+          this.addText(this.hero.x, this.hero.y - 15, `Goblin ruba cristalli!`, '#ef4444');
+        } else if (this.gold >= 15) {
+          this.gold -= 15;
+          this.addText(this.hero.x, this.hero.y - 15, `-15🪙 Rubati! Premi SPAZIO!`, '#ef4444');
+        }
+      }
+    });
+
+    // 9. Aggiorna testi fluttuanti
+    for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+      this.floatingTexts[i].y -= 28 * dt;
+      this.floatingTexts[i].life -= dt;
+      if (this.floatingTexts[i].life <= 0) this.floatingTexts.splice(i, 1);
+    }
+  }
+
+  performRebirth() {
+    this.rebirths++;
+    this.multiplier = Math.pow(2, this.rebirths);
+    this.gold = 50;
+    this.hero.bag = 0;
+    this.hero.maxBag = 6 + (this.rebirths * 2);
+    this.spawnerLevel = 1;
+    this.forgeLevel = 1;
+    this.helperCount = 0;
+    this.goldTrees = 0;
+    this.helpers = [];
+    this.boulders = [];
+    this.goblins = [];
+    this.addText(this.hero.x, this.hero.y - 30, `🔥 RINASCITA COMPLETATA! Moltiplicatore x${this.multiplier}!`, '#facc15');
+  }
+
+  getProgressRatio() {
+    const goldRatio = this.gold / WIN_GOLD;
+    const rebRatio = this.rebirths / WIN_REBIRTHS;
+    return Math.min(1, Math.max(goldRatio, rebRatio));
+  }
+
+  hasWon() {
+    return this.gold >= WIN_GOLD || this.rebirths >= WIN_REBIRTHS;
+  }
+
+  serialize() {
+    return {
+      id: this.id,
+      name: this.name,
+      gold: this.gold,
+      rebirths: this.rebirths,
+      multiplier: this.multiplier,
+      hero: this.hero,
+      spawnerLevel: this.spawnerLevel,
+      forgeLevel: this.forgeLevel,
+      helperCount: this.helperCount,
+      goldTrees: this.goldTrees,
+      crystals: this.crystals,
+      helpers: this.helpers,
+      goblins: this.goblins,
+      boulders: this.boulders
+    };
+  }
+
+  applySnapshot(snap) {
+    this.gold = snap.gold;
+    this.rebirths = snap.rebirths;
+    this.multiplier = snap.multiplier;
+    this.hero = snap.hero;
+    this.spawnerLevel = snap.spawnerLevel;
+    this.forgeLevel = snap.forgeLevel;
+    this.helperCount = snap.helperCount;
+    this.goldTrees = snap.goldTrees;
+    this.crystals = snap.crystals;
+    this.helpers = snap.helpers;
+    this.goblins = snap.goblins;
+    this.boulders = snap.boulders;
+  }
+}
+
+// --- 2. INTELLIGENZA ARTIFICIALE DEL BOT (FISICA E UMANIZZATA) ---
+class BotBrain {
+  constructor(world) {
+    this.world = world;
+    this.decisionTimer = 0;
+    this.targetPos = { x: 340, y: 300 };
+    this.humanPause = 0;
+  }
+
+  update(dt) {
+    const w = this.world;
+    const h = w.hero;
+
+    // 1. Se c'è un Goblin Ladro o un Masso vicino, il Bot usa la spada per difendersi!
+    const nearGoblin = w.goblins.find(g => Math.hypot(g.x - h.x, g.y - h.y) < 48);
+    const nearBoulder = w.boulders.find(b => Math.hypot(b.x - h.x, b.y - h.y) < 48);
+    if (nearGoblin || nearBoulder) {
+      const target = nearGoblin || nearBoulder;
+      const ang = Math.atan2(target.y - h.y, target.x - h.x);
+      h.facing = { x: Math.cos(ang), y: Math.sin(ang) };
+      w.triggerSwordAttack();
+    }
+
+    // Piccole esitazioni umane
+    if (this.humanPause > 0) {
+      this.humanPause -= dt;
+      h.vx = 0;
+      h.vy = 0;
+      return;
+    }
+
+    this.decisionTimer -= dt;
+    if (this.decisionTimer <= 0) {
+      this.decisionTimer = 0.32 + Math.random() * 0.25;
+
+      // 8% di possibilità di fare una micro-pausa umana
+      if (Math.random() < 0.08) {
+        this.humanPause = 0.25;
+        return;
+      }
+
+      // Scelta obiettivo fisico sulla mappa
+      // Priorità A: Se un Goblin lo attacca, gli va incontro per ucciderlo
+      if (w.goblins.length > 0) {
+        this.targetPos = { x: w.goblins[0].x, y: w.goblins[0].y };
+      }
+      // Priorità B: Se può fare la Rinascita, corre al pad Rebirth!
+      else if (w.gold >= w.pads[4].getCost()) {
+        this.targetPos = { x: w.pads[4].x, y: w.pads[4].y };
+      }
+      // Priorità C: Se ha abbastanza oro per un potenziamento o per sabotare il giocatore
+      else if (this.findAffordablePad()) {
+        const pad = this.findAffordablePad();
+        this.targetPos = { x: pad.x, y: pad.y };
+      }
+      // Priorità D: Se lo zaino è pieno (o quasi), va alla Fucina a vendere
+      else if (h.bag >= h.maxBag * 0.7 || (h.bag > 0 && w.crystals.length === 0)) {
+        this.targetPos = { x: w.forgePos.x, y: w.forgePos.y };
+      }
+      // Priorità E: Cerca il cristallo più vicino
+      else if (w.crystals.length > 0) {
+        let bestC = w.crystals[0];
+        let minD = Infinity;
+        w.crystals.forEach(c => {
+          const d = Math.hypot(c.x - h.x, c.y - h.y);
+          if (d < minD) { minD = d; bestC = c; }
+        });
+        this.targetPos = { x: bestC.x, y: bestC.y };
+      }
+    }
+
+    // Muovi verso il targetPos scelto
+    const dx = this.targetPos.x - h.x;
+    const dy = this.targetPos.y - h.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 8) {
+      h.vx = dx / dist;
+      h.vy = dy / dist;
+    } else {
+      h.vx = 0;
+      h.vy = 0;
+    }
+  }
+
+  findAffordablePad() {
+    const w = this.world;
+    const affordable = w.pads.filter(p => w.gold >= p.getCost());
+    if (affordable.length === 0) return null;
+    // Sceglie se comprare un upgrade economico o sabotare l'avversario
+    return affordable[Math.floor(Math.random() * affordable.length)];
+  }
+}
+
+// --- 3. RENDERER GRAFICO RPG TOP-DOWN ---
+class WorldRenderer {
+  static drawWorld(ctx, world, viewX, viewY, viewW, viewH, labelBanner) {
+    ctx.save();
+    // Definisci rettangolo di clipping per questa telecamera (Split-Screen o Full-Screen)
+    ctx.beginPath();
+    ctx.rect(viewX, viewY, viewW, viewH);
+    ctx.clip();
+
+    // Calcola Camera centrata sull'eroe ma bloccata ai bordi della tenuta
+    let camX = world.hero.x - viewW / 2;
+    let camY = world.hero.y - viewH / 2;
+    camX = Math.max(0, Math.min(WORLD_W - viewW, camX));
+    camY = Math.max(0, Math.min(WORLD_H - viewH, camY));
+
+    // Se la finestra è più larga del mondo (es. Fullscreen LAN), centra il mondo
+    if (viewW > WORLD_W) camX = -(viewW - WORLD_W) / 2;
+    if (viewH > WORLD_H) camY = -(viewH - WORLD_H) / 2;
+
+    ctx.translate(viewX - camX, viewY - camY);
+
+    // Sfondo esterno acqua/fossato
+    ctx.fillStyle = '#23495d';
+    ctx.fillRect(camX, camY, viewW, viewH);
+
+    // Terreno Prato della Tenuta
+    ctx.fillStyle = '#5c9c42';
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+    // Pattern erba e sentieri in pietra/terra
+    ctx.fillStyle = '#528e39';
+    for (let gx = 20; gx < WORLD_W; gx += 60) {
+      for (let gy = 20; gy < WORLD_H; gy += 60) {
+        ctx.fillRect(gx, gy, 18, 8);
+      }
+    }
+
+    // Sentiero centrale che collega Fonte, Fucina e Zona Mercato
+    ctx.fillStyle = '#c8b08a';
+    ctx.beginPath();
+    ctx.roundRect(140, 170, 390, 50, 20);
+    ctx.roundRect(310, 180, 60, 260, 20);
+    ctx.roundRect(70, 425, 540, 165, 18);
+    ctx.fill();
+
+    // Recinto di legno perimetrale
+    ctx.strokeStyle = '#4a301d';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(5, 5, WORLD_W - 10, WORLD_H - 10);
+
+    // 1. Disegna Alberi d'Oro sbloccati (in alto al centro/destra)
+    for (let t = 0; t < Math.min(8, world.goldTrees); t++) {
+      const tx = 260 + (t % 4) * 52;
+      const ty = 75 + Math.floor(t / 4) * 48;
+      // Tronco
+      ctx.fillStyle = '#5c3a21';
+      ctx.fillRect(tx - 5, ty, 10, 16);
+      // Chioma dorata
+      ctx.beginPath();
+      ctx.arc(tx, ty - 6, 16, 0, Math.PI * 2);
+      ctx.fillStyle = '#eab308';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#ca8a04';
+      ctx.stroke();
+    }
+
+    // 2. Disegna la FONTE MAGICA (Spawner)
+    const well = world.wellPos;
+    ctx.beginPath();
+    ctx.arc(well.x, well.y, well.r, 0, Math.PI * 2);
+    ctx.fillStyle = '#0284c7';
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#64748b';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(well.x, well.y, well.r * 0.55, 0, Math.PI * 2);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`FONTE LV.${world.spawnerLevel}`, well.x, well.y - well.r - 8);
+
+    // 3. Disegna la FUCINA DEL MERCATO
+    const fg = world.forgePos;
+    ctx.fillStyle = '#475569';
+    ctx.beginPath();
+    ctx.roundRect(fg.x - 36, fg.y - 32, 72, 64, 8);
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#1e293b';
+    ctx.stroke();
+
+    // Fuoco ardente nella fucina
+    ctx.beginPath();
+    ctx.arc(fg.x, fg.y, 16, 0, Math.PI * 2);
+    ctx.fillStyle = '#ea580c';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(fg.x, fg.y, 9, 0, Math.PI * 2);
+    ctx.fillStyle = '#fde047';
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`FUCINA ORO`, fg.x, fg.y - 40);
+
+    // 4. Disegna i PAD CALPESTABILI (Shop & Sabotaggio)
+    world.pads.forEach(p => {
+      const canBuy = world.gold >= p.getCost();
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = canBuy ? 0.92 : 0.45;
+      ctx.fill();
+      ctx.lineWidth = canBuy ? 3.5 : 2;
+      ctx.strokeStyle = canBuy ? '#fde047' : '#334155';
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(p.title, p.x, p.y - 3);
+      ctx.fillStyle = canBuy ? '#fef08a' : '#e2e8f0';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText(`${p.getCost()}🪙`, p.x, p.y + 12);
+    });
+
+    // 5. Disegna Cristalli a terra
+    const now = performance.now() * 0.005;
+    world.crystals.forEach(c => {
+      const fy = c.y + Math.sin(now + c.bob) * 3;
+      ctx.save();
+      ctx.translate(c.x, fy);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = c.color;
+      ctx.fillRect(-7, -7, 14, 14);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-7, -7, 14, 14);
+      ctx.restore();
+    });
+
+    // 6. Disegna Massi di Sabotaggio
+    world.boulders.forEach(b => {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = '#57534e';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#292524';
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText(`🪨SPAZIO`, b.x, b.y + 3);
+    });
+
+    // 7. Disegna Operai PNG Aiutanti
+    world.helpers.forEach(h => {
+      ctx.beginPath();
+      ctx.arc(h.x, h.y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+      if (h.bag > 0) {
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(h.x, h.y - 12, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    // 8. Disegna Goblin Ladri Ostili
+    world.goblins.forEach(g => {
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, 13, 0, Math.PI * 2);
+      ctx.fillStyle = '#dc2626';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#450a0a';
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText(`👹LADRO`, g.x, g.y - 16);
+    });
+
+    // 9. Disegna l'EROE RPG
+    const hr = world.hero;
+    ctx.save();
+    ctx.translate(hr.x, hr.y);
+
+    // Effetto Fango/Rallentamento se maledetto
+    if (hr.slowCurseTimer > 0) {
+      ctx.beginPath();
+      ctx.arc(0, 0, 22, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(147, 51, 234, 0.35)';
+      ctx.fill();
+    }
+
+    // Fendente della Spada se sta attaccando
+    if (hr.attackTimer > 0) {
+      const angle = Math.atan2(hr.facing.y, hr.facing.x);
+      ctx.beginPath();
+      ctx.arc(0, 0, 42, angle - 0.8, angle + 0.8);
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 8;
+      ctx.stroke();
+    }
+
+    // Corpo Eroe
+    ctx.beginPath();
+    ctx.arc(0, 0, 15, 0, Math.PI * 2);
+    ctx.fillStyle = world.color;
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+
+    // Occhi orientati nella direzione di marcia
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(hr.facing.x * 6 - 3, hr.facing.y * 6 - 2, 2.5, 0, Math.PI * 2);
+    ctx.arc(hr.facing.x * 6 + 3, hr.facing.y * 6 - 2, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Etichetta zaino sopra la testa
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-26, -32, 52, 15);
+    ctx.fillStyle = hr.bag >= hr.maxBag ? '#f87171' : '#38bdf8';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`💎 ${hr.bag}/${hr.maxBag}`, 0, -21);
+    ctx.restore();
+
+    // 10. Testi Fluttuanti
+    world.floatingTexts.forEach(ft => {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, ft.life);
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
+      ctx.fillStyle = ft.color;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
+    });
+
+    ctx.restore();
+
+    // Banner in sovrimpressione per identificare la vista
+    ctx.save();
+    ctx.fillStyle = 'rgba(36, 23, 14, 0.8)';
+    ctx.fillRect(viewX + 12, viewY + 12, 240, 28);
+    ctx.strokeStyle = '#d99b26';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(viewX + 12, viewY + 12, 240, 28);
+    ctx.fillStyle = '#f4ece1';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(labelBanner, viewX + 22, viewY + 30);
+    ctx.restore();
+  }
+}
+
+// --- 4. NETWORKING P2P ZERO-SERVER (SUPPORTA 2 O PIÙ GIOCATORI) ---
+class MultiPeerManager {
+  constructor(onMessage, onPeersChanged) {
+    this.isHost = false;
+    this.peers = []; // Usato dall'Host per mantenere N canali P2P
+    this.pendingPeer = null;
+    this.clientPeer = null;
+    this.clientChannel = null;
+    this.onMessage = onMessage;
+    this.onPeersChanged = onPeersChanged;
+  }
+
+  // L'Host crea uno slot d'invito per un nuovo giocatore
+  async createHostInvite(onCodeReady) {
+    this.isHost = true;
+    const pc = new RTCPeerConnection({ iceServers: [] });
+    const channel = pc.createDataChannel('rpgMesh_' + Date.now());
+    const peerEntry = { id: 'p_' + (this.peers.length + 2), pc, channel, open: false };
+    this.pendingPeer = peerEntry;
+
+    channel.onopen = () => {
+      peerEntry.open = true;
+      this.peers.push(peerEntry);
+      this.pendingPeer = null;
+      if (this.onPeersChanged) this.onPeersChanged(this.peers.length + 1);
+    };
+    channel.onmessage = (e) => {
+      if (this.onMessage) this.onMessage(JSON.parse(e.data), peerEntry.id);
+    };
+
+    pc.onicecandidate = (e) => {
+      if (!e.candidate) {
+        onCodeReady(btoa(JSON.stringify(pc.localDescription)));
+      }
+    };
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+  }
+
+  async completeHostHandshake(answerCode) {
+    if (!this.pendingPeer) return;
+    const desc = new RTCSessionDescription(JSON.parse(atob(answerCode)));
+    await this.pendingPeer.pc.setRemoteDescription(desc);
+  }
+
+  // Il Client riceve l'offerta e genera la risposta
+  async joinAsClient(offerCode, onAnswerReady, onConnected) {
+    this.isHost = false;
+    this.clientPeer = new RTCPeerConnection({ iceServers: [] });
+    this.clientPeer.ondatachannel = (e) => {
+      this.clientChannel = e.channel;
+      this.clientChannel.onopen = () => onConnected && onConnected();
+      this.clientChannel.onmessage = (ev) => this.onMessage && this.onMessage(JSON.parse(ev.data), 'host');
+    };
+
+    this.clientPeer.onicecandidate = (e) => {
+      if (!e.candidate) {
+        onAnswerReady(btoa(JSON.stringify(this.clientPeer.localDescription)));
+      }
+    };
+
+    const desc = new RTCSessionDescription(JSON.parse(atob(offerCode)));
+    await this.clientPeer.setRemoteDescription(desc);
+    const answer = await this.clientPeer.createAnswer();
+    await this.clientPeer.setLocalDescription(answer);
+  }
+
+  broadcastFromHost(payload) {
+    const str = JSON.stringify(payload);
+    this.peers.forEach(p => {
+      if (p.open && p.channel.readyState === 'open') p.channel.send(str);
+    });
+  }
+
+  sendToHost(payload) {
+    if (this.clientChannel && this.clientChannel.readyState === 'open') {
+      this.clientChannel.send(JSON.stringify(payload));
+    }
+  }
+
+  closeAll() {
+    this.peers.forEach(p => p.pc.close());
+    if (this.pendingPeer) this.pendingPeer.pc.close();
+    if (this.clientPeer) this.clientPeer.close();
+    this.peers = [];
+  }
+}
+
+// --- 5. GAME CONTROLLER PRINCIPALE ---
+const Game = {
+  mode: 'BOT', // 'BOT', 'LAN_HOST', 'LAN_CLIENT'
+  myWorld: null,
+  rivalWorlds: [], // Nel caso di Bot contiene 1 mondo; in LAN può contenerne 1 o più
+  botBrain: null,
+  net: null,
+  keys: {},
+  running: false,
+  lastTime: 0,
+  syncTimer: 0,
+
+  init() {
+    this.setupKeyboard();
+  },
+
+  showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  },
+
+  toast(msg) {
+    const el = document.getElementById('toast-alert');
+    el.innerText = msg;
+    el.style.opacity = '1';
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 3200);
+  },
+
+  setupKeyboard() {
+    window.addEventListener('keydown', (e) => {
+      this.keys[e.code] = true;
+      if (e.code === 'Space' && this.running && this.myWorld) {
+        e.preventDefault();
+        this.myWorld.triggerSwordAttack();
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      this.keys[e.code] = false;
+    });
+  },
+
+  applyPlayerInputs() {
+    if (!this.myWorld) return;
+    let vx = 0, vy = 0;
+    if (this.keys['KeyW'] || this.keys['ArrowUp']) vy -= 1;
+    if (this.keys['KeyS'] || this.keys['ArrowDown']) vy += 1;
+    if (this.keys['KeyA'] || this.keys['ArrowLeft']) vx -= 1;
+    if (this.keys['KeyD'] || this.keys['ArrowRight']) vx += 1;
+
+    if (vx !== 0 && vy !== 0) {
+      vx *= 0.7071;
+      vy *= 0.7071;
+    }
+    this.myWorld.hero.vx = vx;
+    this.myWorld.hero.vy = vy;
+  },
+
+  // --- AVVIO MODALITÀ CONTRO BOT (SPLIT-SCREEN) ---
+  startVsBot() {
+    this.mode = 'BOT';
+    this.myWorld = new RealmWorld('p1', 'Eroe Blu (Tu)', '#2563eb', false);
+    const botWorld = new RealmWorld('bot', 'Rival Bot', '#dc2626', true);
+    this.rivalWorlds = [botWorld];
+    this.botBrain = new BotBrain(botWorld);
+
+    this.launchMatchLoop();
+  },
+
+  // --- AVVIO MODALITÀ LAN MULTIPLAYER ---
+  initLanHost() {
+    this.mode = 'LAN_HOST';
+    this.showScreen('screen-lan-lobby');
+    document.getElementById('lan-host-ui').style.display = 'block';
+    document.getElementById('lan-client-ui').style.display = 'none';
+    document.getElementById('host-offer-out').value = '';
+    document.getElementById('host-answer-in').value = '';
+    document.getElementById('host-peers-count').innerText = '1 (Solo Tu)';
+
+    this.net = new MultiPeerManager(
+      (msg, fromId) => this.onNetworkPacket(msg, fromId),
+      (totalPlayers) => {
+        document.getElementById('host-peers-count').innerText = `${totalPlayers} Giocatori Pronti`;
+        this.toast(`Nuovo giocatore connesso! Totale: ${totalPlayers}`);
+      }
+    );
+  },
+
+  hostCreateOfferSlot() {
+    document.getElementById('host-offer-out').value = 'Generazione codice invito...';
+    this.net.createHostInvite((code) => {
+      document.getElementById('host-offer-out').value = code;
+    });
+  },
+
+  hostConfirmClientAnswer() {
+    const ans = document.getElementById('host-answer-in').value.trim();
+    if (!ans) return;
+    this.net.completeHostHandshake(ans);
+    document.getElementById('host-answer-in').value = '';
+    document.getElementById('host-offer-out').value = '';
+  },
+
+  hostStartMultiplayerMatch() {
+    this.myWorld = new RealmWorld('host', 'Lord Host', '#2563eb', false);
+    this.rivalWorlds = this.net.peers.map((p, idx) => new RealmWorld(p.id, `Rivale #${idx + 2}`, '#dc2626', false));
+    this.net.broadcastFromHost({ type: 'START_MATCH' });
+    this.launchMatchLoop();
+  },
+
+  initLanClient() {
+    this.mode = 'LAN_CLIENT';
+    this.showScreen('screen-lan-lobby');
+    document.getElementById('lan-host-ui').style.display = 'none';
+    document.getElementById('lan-client-ui').style.display = 'block';
+    document.getElementById('client-offer-in').value = '';
+    document.getElementById('client-answer-out').value = '';
+
+    this.net = new MultiPeerManager((msg) => this.onNetworkPacket(msg, 'host'));
+  },
+
+  clientProcessOffer() {
+    const offer = document.getElementById('client-offer-in').value.trim();
+    if (!offer) return;
+    this.net.joinAsClient(
+      offer,
+      (ansCode) => {
+        document.getElementById('client-answer-out').value = ansCode;
+        document.getElementById('client-status-msg').innerText = 'Invia questa risposta all\'Host e attendi l\'avvio!';
+      },
+      () => {
+        document.getElementById('client-status-msg').innerText = 'Connesso! In attesa che l\'Host avvii la partita...';
+      }
+    );
+  },
+
+  cancelLan() {
+    if (this.net) this.net.closeAll();
+    this.showScreen('screen-menu');
+  },
+
+  onNetworkPacket(msg, senderId) {
+    if (msg.type === 'START_MATCH') {
+      this.myWorld = new RealmWorld('client_' + Math.floor(Math.random()*999), 'Eroe Client', '#16a34a', false);
+      this.rivalWorlds = [new RealmWorld('host', 'Rivale Principale', '#dc2626', false)];
+      this.launchMatchLoop();
+    } else if (msg.type === 'SYNC_WORLD') {
+      if (this.mode === 'LAN_HOST') {
+        let rw = this.rivalWorlds.find(w => w.id === senderId);
+        if (!rw) {
+          rw = new RealmWorld(senderId, msg.world.name, '#dc2626', false);
+          this.rivalWorlds.push(rw);
+        }
+        rw.applySnapshot(msg.world);
+      } else if (this.mode === 'LAN_CLIENT') {
+        if (this.rivalWorlds[0]) this.rivalWorlds[0].applySnapshot(msg.world);
+      }
+    } else if (msg.type === 'SABOTAGE') {
+      // Quando un avversario lancia un sabotaggio in LAN, colpisce la tua tenuta!
+      if (this.myWorld) {
+        this.myWorld.receiveSabotage(msg.sabId);
+        this.toast(`⚠️ ${msg.fromName} ti ha lanciato un sabotaggio!`);
+      }
+      // Se sono l'Host, inoltro il sabotaggio anche agli altri peer
+      if (this.mode === 'LAN_HOST') {
+        this.net.broadcastFromHost(msg);
+      }
+    } else if (msg.type === 'MATCH_OVER') {
+      this.finishMatch(msg.winnerName);
+    } else if (msg.type === 'REMATCH') {
+      this.resetAllWorlds();
+    }
+  },
+
+  launchMatchLoop() {
+    this.running = true;
+    this.showScreen('screen-game');
+    this.lastTime = performance.now();
+    requestAnimationFrame((t) => this.gameLoop(t));
+  },
+
+  handleSabotageTriggered(sabId, senderName) {
+    if (this.mode === 'BOT') {
+      // Se è l'umano a sabotare, colpisce il Bot; se è il Bot, colpisce l'umano
+      if (senderName === this.myWorld.name) {
+        this.rivalWorlds[0].receiveSabotage(sabId);
+        this.toast(`Hai sabotato ${this.rivalWorlds[0].name}!`);
+      } else {
+        this.myWorld.receiveSabotage(sabId);
+        this.toast(`⚠️ ${senderName} ti ha mandato un sabotaggio!`);
+      }
+    } else if (this.mode === 'LAN_HOST') {
+      this.net.broadcastFromHost({ type: 'SABOTAGE', sabId, fromName: senderName });
+      this.toast(`Sabotaggio inviato a tutti gli avversari in LAN!`);
+    } else if (this.mode === 'LAN_CLIENT') {
+      this.net.sendToHost({ type: 'SABOTAGE', sabId, fromName: senderName });
+      this.toast(`Sabotaggio inviato in LAN!`);
+    }
+  },
+
+  gameLoop(now) {
+    if (!this.running) return;
+    const dt = Math.min(0.1, (now - this.lastTime) / 1000);
+    this.lastTime = now;
+
+    this.applyPlayerInputs();
+
+    // Aggiorna la mia tenuta
+    this.myWorld.update(dt, (sabId, fromName) => this.handleSabotageTriggered(sabId, fromName));
+
+    // Se siamo contro il Bot, aggiorna l'IA e la fisica del Bot
+    if (this.mode === 'BOT' && this.rivalWorlds[0]) {
+      this.botBrain.update(dt);
+      this.rivalWorlds[0].update(dt, (sabId, fromName) => this.handleSabotageTriggered(sabId, fromName));
+    }
+
+    // Sincronizzazione pacchetti LAN a 15Hz
+    if (this.mode === 'LAN_HOST' || this.mode === 'LAN_CLIENT') {
+      this.syncTimer += dt;
+      if (this.syncTimer >= 0.065) {
+        this.syncTimer = 0;
+        const packet = { type: 'SYNC_WORLD', world: this.myWorld.serialize() };
+        if (this.mode === 'LAN_HOST') this.net.broadcastFromHost(packet);
+        else this.net.sendToHost(packet);
+      }
+    }
+
+    this.updateHUD();
+    this.renderScene();
+    this.checkVictoryConditions();
+
+    requestAnimationFrame((t) => this.gameLoop(t));
+  },
+
+  updateHUD() {
+    document.getElementById('hud-my-name').innerText = this.myWorld.name;
+    document.getElementById('hud-my-gold').innerText = this.myWorld.gold;
+    document.getElementById('hud-my-bag').innerText = `${this.myWorld.hero.bag}/${this.myWorld.hero.maxBag}`;
+    document.getElementById('hud-my-rebirth').innerText = this.myWorld.rebirths;
+    document.getElementById('hud-my-mult').innerText = this.myWorld.multiplier;
+
+    const myProg = this.myWorld.getProgressRatio() * 50;
+    document.getElementById('bar-p1').style.width = `${myProg}%`;
+
+    if (this.rivalWorlds.length > 0) {
+      // Mostra il rivale più vicino alla vittoria nell'HUD in alto a destra
+      const topRival = [...this.rivalWorlds].sort((a, b) => b.getProgressRatio() - a.getProgressRatio())[0];
+      document.getElementById('hud-rival-name').innerText = topRival.name;
+      document.getElementById('hud-rival-gold').innerText = topRival.gold;
+      document.getElementById('hud-rival-rebirth').innerText = topRival.rebirths;
+      document.getElementById('bar-p2').style.width = `${topRival.getProgressRatio() * 50}%`;
+    }
+  },
+
+  renderScene() {
+    const canvas = document.getElementById('worldCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (this.mode === 'BOT') {
+      // SPLIT-SCREEN: Metà Sinistra per il Giocatore, Metà Destra per il Bot
+      const halfW = Math.floor(canvas.width / 2);
+      WorldRenderer.drawWorld(ctx, this.myWorld, 0, 0, halfW, canvas.height, `🛡️ LA TUA TENUTA (WASD + SPAZIO)`);
+      WorldRenderer.drawWorld(ctx, this.rivalWorlds[0], halfW, 0, halfW, canvas.height, `⚔️ TENUTA DEL BOT (LIVE)`);
+
+      // Linea divisoria centrale in legno e oro
+      ctx.fillStyle = '#3a2618';
+      ctx.fillRect(halfW - 4, 0, 8, canvas.height);
+      ctx.fillStyle = '#d99b26';
+      ctx.fillRect(halfW - 1, 0, 2, canvas.height);
+    } else {
+      // FULL-SCREEN PER MULTIPLAYER LAN (Ognuno vede la propria tenuta sul proprio schermo)
+      WorldRenderer.drawWorld(ctx, this.myWorld, 0, 0, canvas.width, canvas.height, `🛡️ LA TUA TENUTA (${this.myWorld.name})`);
+    }
+  },
+
+  checkVictoryConditions() {
+    if (this.myWorld.hasWon()) {
+      if (this.mode === 'LAN_HOST') this.net.broadcastFromHost({ type: 'MATCH_OVER', winnerName: this.myWorld.name });
+      else if (this.mode === 'LAN_CLIENT') this.net.sendToHost({ type: 'MATCH_OVER', winnerName: this.myWorld.name });
+      this.finishMatch(this.myWorld.name);
+      return;
+    }
+
+    for (const rw of this.rivalWorlds) {
+      if (rw.hasWon()) {
+        this.finishMatch(rw.name);
+        return;
+      }
+    }
+  },
+
+  finishMatch(winnerName) {
+    this.running = false;
+    document.getElementById('over-title').innerText = `👑 ${winnerName} Vince!`;
+    const r = this.rivalWorlds[0] || { gold: 0, rebirths: 0, sabotagesSent: 0 };
+    document.getElementById('over-stats').innerHTML = `
+      <div><b>Il Tuo Oro Finale:</b> ${this.myWorld.gold} 🪙 | <b>Rinascite:</b> ${this.myWorld.rebirths} 🔥</div>
+      <div><b>Sabotaggi che hai lanciato:</b> ${this.myWorld.sabotagesSent} 👹</div>
+      <hr style="margin:8px 0; border-color:#c8b08a;">
+      <div><b>Oro Rivale:</b> ${r.gold} 🪙 | <b>Rinascite Rivale:</b> ${r.rebirths} 🔥</div>
+    `;
+    this.showScreen('screen-gameover');
+  },
+
+  resetAllWorlds() {
+    this.myWorld.reset();
+    this.rivalWorlds.forEach(w => w.reset());
+    if (this.botBrain && this.rivalWorlds[0]) {
+      this.botBrain = new BotBrain(this.rivalWorlds[0]);
+    }
+    this.launchMatchLoop();
+  },
+
+  requestRematch() {
+    if (this.mode === 'LAN_HOST') this.net.broadcastFromHost({ type: 'REMATCH' });
+    else if (this.mode === 'LAN_CLIENT') this.net.sendToHost({ type: 'REMATCH' });
+    this.resetAllWorlds();
+  },
+
+  backToMenu() {
+    this.running = false;
+    if (this.net) this.net.closeAll();
+    this.showScreen('screen-menu');
+  }
+};
+
+window.addEventListener('DOMContentLoaded', () => Game.init());
+</script>
+</body>
+</html>

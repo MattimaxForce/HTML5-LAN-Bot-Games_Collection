@@ -1,0 +1,2330 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rival Realms: Deluxe Edition</title>
+  <style>
+    :root {
+      --bg-dark: #140d07;
+      --wood-dark: #2c1a0e;
+      --wood-mid: #4e301b;
+      --wood-light: #7c5032;
+      --parchment: #f7efe2;
+      --parchment-shadow: #e5d5bc;
+      --gold: #e09f24;
+      --gold-bright: #ffca4b;
+      --emerald: #2e8540;
+      --emerald-bright: #3ca352;
+      --crimson: #b8332a;
+      --crimson-bright: #d94338;
+      --purple: #6b2fa0;
+      --text-main: #23150b;
+      --font-ui: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-ui);
+      background: radial-gradient(circle at center, #2b1d12 0%, #100a05 100%);
+      color: var(--text-main);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game-frame {
+      position: relative;
+      width: 1240px;
+      max-width: 98vw;
+      height: 780px;
+      max-height: 96vh;
+      background: var(--parchment);
+      border: 6px solid var(--wood-dark);
+      border-radius: 16px;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), inset 0 0 0 3px var(--wood-light);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* SCHERMATE DI NAVIGAZIONE */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      background: radial-gradient(circle at center, var(--parchment) 0%, var(--parchment-shadow) 100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 20;
+    }
+
+    .screen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .title-banner {
+      font-size: 3.2rem;
+      font-weight: 900;
+      color: var(--wood-dark);
+      text-shadow: 0 3px 0 var(--gold-bright);
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .subtitle-banner {
+      font-size: 1.05rem;
+      color: var(--wood-mid);
+      max-width: 620px;
+      text-align: center;
+      line-height: 1.45;
+      margin-bottom: 26px;
+    }
+
+    .card-panel {
+      background: #efe2cc;
+      border: 3px solid var(--wood-mid);
+      border-radius: 12px;
+      padding: 20px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.08), 0 6px 16px rgba(0,0,0,0.12);
+      margin-bottom: 16px;
+    }
+
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 350px;
+    }
+
+    button {
+      font-family: var(--font-ui);
+      font-weight: 800;
+      font-size: 0.98rem;
+      padding: 12px 20px;
+      border: 3px solid var(--wood-dark);
+      border-radius: 10px;
+      background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 100%);
+      color: var(--wood-dark);
+      cursor: pointer;
+      box-shadow: 0 4px 0 var(--wood-dark);
+      transition: transform 0.1s, filter 0.15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(1.07);
+      transform: translateY(-1px);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 var(--wood-dark);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(0.4);
+    }
+
+    button.btn-green {
+      background: linear-gradient(180deg, var(--emerald-bright) 0%, var(--emerald) 100%);
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+
+    button.btn-red {
+      background: linear-gradient(180deg, var(--crimson-bright) 0%, var(--crimson) 100%);
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+
+    button.btn-wood {
+      background: linear-gradient(180deg, var(--wood-light) 0%, var(--wood-mid) 100%);
+      color: var(--parchment);
+    }
+
+    textarea {
+      width: 100%;
+      height: 58px;
+      border: 2px solid var(--wood-light);
+      border-radius: 8px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 0.75rem;
+      background: #fff;
+      resize: none;
+      margin: 4px 0 10px 0;
+    }
+
+    /* HUD SUPERIORE ED INFERIORE */
+    #screen-game {
+      padding: 0;
+      justify-content: flex-start;
+      background: #1f3a1d;
+    }
+
+    .top-hud {
+      width: 100%;
+      height: 64px;
+      background: linear-gradient(180deg, #382213 0%, #26160b 100%);
+      color: var(--parchment);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 4px solid var(--wood-light);
+      z-index: 15;
+    }
+
+    .hud-cluster {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hud-pill {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--wood-light);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .race-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 280px;
+    }
+
+    .race-track {
+      width: 100%;
+      height: 14px;
+      background: #140b05;
+      border: 2px solid var(--wood-light);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 3px;
+    }
+
+    .race-bar-left {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      background: linear-gradient(90deg, #2563eb, #60a5fa);
+      transition: width 0.25s;
+    }
+
+    .race-bar-right {
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      background: linear-gradient(270deg, #dc2626, #f87171);
+      transition: width 0.25s;
+    }
+
+    .viewport-area {
+      position: relative;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .bottom-hud {
+      width: 100%;
+      height: 44px;
+      background: var(--wood-dark);
+      color: var(--parchment);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      border-top: 3px solid var(--wood-light);
+      z-index: 15;
+    }
+
+    .key-badge {
+      background: var(--wood-mid);
+      padding: 2px 8px;
+      border-radius: 5px;
+      border: 1px solid var(--gold);
+      color: var(--gold-bright);
+      font-weight: 900;
+      margin: 0 2px;
+    }
+
+    /* ============================================================================
+       NEGOZIO ANIMATO (DRAWER / MODAL INTERATTIVO CON MERCANTE LIVE)
+       ============================================================================ */
+    .shop-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 9, 4, 0.55);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 40;
+    }
+
+    .shop-backdrop.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .shop-window {
+      width: 780px;
+      max-width: 94vw;
+      height: 540px;
+      max-height: 84vh;
+      background: var(--parchment);
+      border: 5px solid var(--wood-dark);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.75), inset 0 0 0 3px var(--gold);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(35px) scale(0.94);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .shop-backdrop.open .shop-window {
+      transform: translateY(0) scale(1);
+    }
+
+    /* Intestazione Negozio col Mercante Animato */
+    .shop-header {
+      background: linear-gradient(90deg, #3a2212 0%, #59361e 50%, #3a2212 100%);
+      color: var(--parchment);
+      padding: 12px 18px;
+      border-bottom: 4px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .merchant-stage {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .merchant-portrait {
+      width: 64px;
+      height: 64px;
+      background: radial-gradient(circle, #fde047 0%, #ca8a04 100%);
+      border: 3px solid var(--wood-dark);
+      border-radius: 50%;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Animazione CSS del Mercante (Respiro e Battito Ciglia) */
+    .merchant-avatar-svg {
+      width: 56px;
+      height: 56px;
+      animation: merchantBob 2.2s infinite ease-in-out;
+    }
+
+    @keyframes merchantBob {
+      0%, 100% { transform: translateY(2px); }
+      50% { transform: translateY(-2px); }
+    }
+
+    .merchant-speech {
+      background: var(--parchment);
+      color: var(--wood-dark);
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 2px solid var(--wood-dark);
+      font-size: 0.88rem;
+      font-weight: 700;
+      max-width: 390px;
+      position: relative;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    }
+
+    .shop-tabs {
+      display: flex;
+      background: #dfd0b8;
+      border-bottom: 3px solid var(--wood-mid);
+      padding: 6px 14px 0 14px;
+      gap: 8px;
+    }
+
+    .shop-tab-btn {
+      background: #c7b599;
+      color: var(--wood-dark);
+      border: 2px solid var(--wood-mid);
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+      padding: 9px 18px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      box-shadow: none;
+      cursor: pointer;
+    }
+
+    .shop-tab-btn.active {
+      background: var(--parchment);
+      color: var(--wood-dark);
+      border-color: var(--wood-dark);
+      transform: translateY(3px);
+      padding-bottom: 12px;
+    }
+
+    .shop-body {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      align-content: start;
+    }
+
+    .shop-item-card {
+      background: #fff9f0;
+      border: 2px solid #cbb696;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .shop-item-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--gold);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    }
+
+    .item-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .item-icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      background: #efe3cf;
+      border: 2px solid var(--wood-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .item-info h4 {
+      font-size: 0.96rem;
+      color: var(--wood-dark);
+      margin-bottom: 2px;
+    }
+
+    .item-info p {
+      font-size: 0.78rem;
+      color: #634832;
+      line-height: 1.25;
+      margin-bottom: 4px;
+    }
+
+    .item-badge-count {
+      display: inline-block;
+      background: #e6d6be;
+      color: var(--wood-dark);
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    /* Toast Notifiche */
+    #toast-banner {
+      position: absolute;
+      top: 74px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(34, 20, 10, 0.95);
+      color: #fff;
+      border: 2px solid var(--gold-bright);
+      padding: 8px 22px;
+      border-radius: 24px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s;
+      z-index: 50;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-frame">
+
+  <!-- 1. SCHERMATA MENU PRINCIPALE -->
+  <div id="screen-menu" class="screen active">
+    <div class="title-banner">RIVAL REALMS</div>
+    <p class="subtitle-banner">
+      Esplora la tua tenuta, raccogli cristalli, entra nell'<b>Emporio Animato</b> per reclutare Minatori, Portatori e Cavalieri di Guardia dotati di occhi ed equipaggiamento, e sabota il regno rivale!
+    </p>
+    <div class="btn-stack">
+      <button class="btn-green" onclick="Game.startBotMatch()">⚔️ Gioca contro il BOT (Split-Screen)</button>
+      <button onclick="Game.showScreen('screen-lan-role')">🌐 Multiplayer LAN P2P (2+ Giocatori)</button>
+    </div>
+  </div>
+
+  <!-- 2. SCHERMATA SCELTA RUOLO LAN -->
+  <div id="screen-lan-role" class="screen">
+    <div class="title-banner" style="font-size:2.3rem;">Multiplayer LAN Zero-Server</div>
+    <p class="subtitle-banner">Connessione diretta P2P tra browser senza server esterni. Ognuno governa la propria tenuta a schermo intero e può sabotare gli avversari.</p>
+    <div class="btn-stack">
+      <button onclick="Game.setupLanHost()">👑 Crea Stanza (Host)</button>
+      <button class="btn-wood" onclick="Game.setupLanClient()">🛡️ Partecipa (Client)</button>
+      <button class="btn-wood" onclick="Game.showScreen('screen-menu')">⬅️ Indietro</button>
+    </div>
+  </div>
+
+  <!-- 3. SCHERMATA LOBBY P2P -->
+  <div id="screen-lan-lobby" class="screen">
+    <div class="title-banner" style="font-size:2rem;">Sala Connessione P2P</div>
+
+    <div id="host-lobby-panel" class="card-panel" style="display:none;">
+      <div style="font-weight:800; margin-bottom:8px;">Giocatori nella Stanza: <span id="host-player-count">1 (Tu)</span></div>
+      <p style="font-size:0.82rem; margin-bottom:6px;">1. Genera un invito per ciascun amico e inviaglielo:</p>
+      <button style="padding:7px 14px; font-size:0.84rem; margin-bottom:6px;" onclick="Game.hostCreateOffer()">+ Genera Codice Invito</button>
+      <textarea id="host-offer-txt" readonly placeholder="Clicca 'Genera Codice Invito'..." onclick="this.select()"></textarea>
+      <p style="font-size:0.82rem; margin-bottom:6px;">2. Incolla il Codice Risposta del tuo amico:</p>
+      <textarea id="host-answer-txt" placeholder="Incolla risposta client..."></textarea>
+      <div style="display:flex; gap:10px;">
+        <button style="flex:1;" onclick="Game.hostAcceptAnswer()">Conferma Giocatore</button>
+        <button class="btn-green" style="flex:1;" onclick="Game.hostLaunchLanGame()">Avvia Partita!</button>
+      </div>
+    </div>
+
+    <div id="client-lobby-panel" class="card-panel" style="display:none;">
+      <p style="font-size:0.82rem; font-weight:700;">1. Incolla il Codice Invito ricevuto dall'Host:</p>
+      <textarea id="client-offer-txt" placeholder="Incolla invito Host..."></textarea>
+      <button style="width:100%; margin-bottom:8px;" onclick="Game.clientGenerateAnswer()">Genera Risposta</button>
+      <p style="font-size:0.82rem; font-weight:700;">2. Copia questa risposta e inviala all'Host:</p>
+      <textarea id="client-answer-txt" readonly onclick="this.select()"></textarea>
+      <p id="client-lobby-status" style="font-size:0.85rem; font-weight:800; color:var(--emerald); text-align:center;">In attesa...</p>
+    </div>
+
+    <button class="btn-wood" onclick="Game.cancelLan()">Annulla</button>
+  </div>
+
+  <!-- 4. SCHERMATA DI GIOCO PRINCIPALE -->
+  <div id="screen-game" class="screen">
+    <div class="top-hud">
+      <div class="hud-cluster">
+        <div class="hud-pill" style="border-color:#60a5fa;">🧙‍♂️ <span id="ui-my-name">Tu</span></div>
+        <div class="hud-pill">🪙 <span id="ui-my-gold">0</span></div>
+        <div class="hud-pill">💎 Zaino: <span id="ui-my-bag">0/6</span></div>
+        <div class="hud-pill">👥 Squadra: <span id="ui-my-team">0</span></div>
+        <div class="hud-pill" style="color:#facc15;">🔥 Rinascite: <span id="ui-my-reb">0</span> (x<span id="ui-my-mult">1</span>)</div>
+      </div>
+
+      <div class="race-box">
+        <div style="font-size:0.7rem; font-weight:900; letter-spacing:0.5px; color:#facc15;">OBIETTIVO VITTORIA: 5.000 🪙 O 3 RINASCITE</div>
+        <div class="race-track">
+          <div class="race-bar-left" id="ui-bar-p1" style="width:0%"></div>
+          <div class="race-bar-right" id="ui-bar-p2" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="hud-cluster">
+        <div class="hud-pill" style="border-color:#f87171;">⚔️ <span id="ui-riv-name">Rivale</span></div>
+        <div class="hud-pill">🪙 <span id="ui-riv-gold">0</span></div>
+        <div class="hud-pill">🔥 Rinascite: <span id="ui-riv-reb">0</span></div>
+      </div>
+    </div>
+
+    <div id="toast-banner">Notifica</div>
+
+    <div class="viewport-area">
+      <canvas id="gameCanvas" width="1228" height="660"></canvas>
+
+      <!-- FINESTRA NEGOZIO ANIMATO OVERLAY -->
+      <div id="shop-modal" class="shop-backdrop">
+        <div class="shop-window">
+          <div class="shop-header">
+            <div class="merchant-stage">
+              <div class="merchant-portrait">
+                <!-- Mercante SVG Animato con occhi e cappello -->
+                <svg class="merchant-avatar-svg" viewBox="0 0 64 64">
+                  <!-- Cappello da Mercante -->
+                  <path d="M10 26 Q32 6 54 26 Z" fill="#7c2d12" stroke="#291509" stroke-width="2.5"/>
+                  <ellipse cx="32" cy="26" rx="24" ry="5" fill="#9a3412" stroke="#291509" stroke-width="2"/>
+                  <circle cx="42" cy="16" r="4" fill="#facc15"/>
+                  <!-- Viso -->
+                  <circle cx="32" cy="38" r="14" fill="#fed7aa" stroke="#291509" stroke-width="2.5"/>
+                  <!-- Barba e Baffi -->
+                  <path d="M19 42 Q32 58 45 42 Q32 48 19 42 Z" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+                  <!-- Occhi espressivi -->
+                  <circle cx="27" cy="35" r="2.6" fill="#1e293b"/>
+                  <circle cx="37" cy="35" r="2.6" fill="#1e293b"/>
+                  <circle cx="27.8" cy="34.2" r="0.9" fill="#ffffff"/>
+                  <circle cx="37.8" cy="34.2" r="0.9" fill="#ffffff"/>
+                </svg>
+              </div>
+              <div class="merchant-speech" id="merchant-quote">
+                "Benvenuto all'Emporio Reale! Assumi veri lavoratori per la tua tenuta o manda qualche dispetto ai tuoi rivali!"
+              </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="hud-pill" style="background:#26160b; font-size:1rem;">🪙 <span id="shop-gold-display">0</span></div>
+              <button class="btn-red" style="padding:8px 14px;" onclick="Game.toggleShop(false)">✖ Chiudi (E)</button>
+            </div>
+          </div>
+
+          <div class="shop-tabs">
+            <button class="shop-tab-btn active" id="tab-btn-workers" onclick="Game.switchShopTab('workers')">👥 Assumi Lavoratori & Guardie</button>
+            <button class="shop-tab-btn" id="tab-btn-upgrades" onclick="Game.switchShopTab('upgrades')">⚒️ Potenzia Strutture & Coltivazioni</button>
+            <button class="shop-tab-btn" id="tab-btn-sabotage" onclick="Game.switchShopTab('sabotage')">💀 Sabota Avversari</button>
+          </div>
+
+          <div class="shop-body" id="shop-items-container">
+            <!-- Popolato dinamicamente da JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-hud">
+      <div>
+        <span class="key-badge">WASD</span> / <span class="key-badge">FRECCE</span> Muovi Eroe
+        <span class="key-badge" style="margin-left:10px;">SPAZIO</span> Usa Spada
+        <span class="key-badge" style="margin-left:10px;">E</span> Apri/Chiudi Emporio
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button style="padding:6px 14px; font-size:0.84rem;" onclick="Game.toggleShop()">🏪 Apri Emporio & Gilda (E)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. SCHERMATA FINE PARTITA -->
+  <div id="screen-gameover" class="screen">
+    <div class="title-banner" id="over-winner-title">Vittoria!</div>
+    <p class="subtitle-banner">La contesa tra i regni si è conclusa.</p>
+    <div class="card-panel" id="over-summary-box" style="text-align:center; line-height:1.8; font-size:1.05rem;"></div>
+    <div class="btn-stack">
+      <button class="btn-green" onclick="Game.triggerRematch()">🔄 Gioca Rivincita</button>
+      <button class="btn-wood" onclick="Game.returnToMain()">🏠 Menu Principale</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/**
+ * ============================================================================
+ * RIVAL REALMS: DELUXE EDITION - MOTORE GRAFICO E LOGICO
+ * - Sprite Umanoidi con occhi direzionali, piedi animati, mani, elmi/cappelli
+ * - Edifici illustrati su Canvas senza testi che sbordano da cerchi
+ * - Negozio RPG Animato con Mercante e 3 categorie (Persone, Strutture, Sabotaggi)
+ * ============================================================================
+ */
+
+const MAP_W = 680;
+const MAP_H = 620;
+const TARGET_GOLD = 5000;
+const TARGET_REBIRTHS = 3;
+
+// --- 1. DISEGNO PROCEDURALE DETTAGLIATO DI PERSONAGGI ED EDIFICI ---
+class ArtStudio {
+  /**
+   * Disegna un personaggio umanoide completo con piedi animati, corpo,
+   * mani, zaino, testa, occhi con pupille direzionali e cappello/elmo specifico.
+   */
+  static drawCharacter(ctx, opts) {
+    const {
+      x, y, radius = 14, bodyColor = '#2563eb', skinColor = '#fed7aa',
+      facing = { x: 0, y: 1 }, walkPhase = 0, isMoving = false,
+      role = 'HERO', bagCount = 0, maxBag = 0, attackTimer = 0,
+      slowCurse = false, label = ''
+    } = opts;
+
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Aura rallentamento se maledetto
+    if (slowCurse) {
+      ctx.beginPath();
+      ctx.ellipse(0, 4, radius + 9, radius * 0.7, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(126, 34, 206, 0.38)';
+      ctx.fill();
+    }
+
+    // Ombra morbida a terra
+    ctx.beginPath();
+    ctx.ellipse(0, radius + 3, radius * 0.9, radius * 0.45, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+    ctx.fill();
+
+    // 1. Piedini animati durante la camminata
+    const footSwing = isMoving ? Math.sin(walkPhase * 12) * 5 : 0;
+    ctx.fillStyle = '#3f2311';
+    ctx.beginPath();
+    ctx.arc(-5, radius - 1 + footSwing, 4.2, 0, Math.PI * 2);
+    ctx.arc(5, radius - 1 - footSwing, 4.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Zaino dietro la schiena se trasporta cristalli
+    if (bagCount > 0) {
+      ctx.fillStyle = '#854d0e';
+      ctx.strokeStyle = '#291509';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(-radius - 4, -8, 9, 15, 3);
+      ctx.fill();
+      ctx.stroke();
+      // Gemma che spunta dallo zaino
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(-radius, -10, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 3. Fendente della spada (se sta attaccando)
+    if (attackTimer > 0) {
+      const ang = Math.atan2(facing.y, facing.x);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(0, 0, radius + 28, ang - 0.9, ang + 0.9);
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.9)';
+      ctx.lineWidth = 9;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 4. Busto / Tunica
+    ctx.beginPath();
+    ctx.arc(0, 2, radius * 0.88, 0, Math.PI * 2);
+    ctx.fillStyle = bodyColor;
+    ctx.fill();
+    ctx.lineWidth = 2.2;
+    ctx.strokeStyle = '#1e1b18';
+    ctx.stroke();
+
+    // 5. Mani oscillanti (+ Spada per Eroe e Guardie)
+    const handOffset = isMoving ? Math.cos(walkPhase * 12) * 4 : 0;
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.arc(-radius * 0.85, 2 - handOffset, 4, 0, Math.PI * 2);
+    ctx.arc(radius * 0.85, 2 + handOffset, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    if (role === 'HERO' || role === 'GUARD') {
+      ctx.save();
+      ctx.translate(radius * 0.85, 2 + handOffset);
+      const swordAngle = attackTimer > 0 ? Math.atan2(facing.y, facing.x) : -0.5;
+      ctx.rotate(swordAngle);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.3;
+      ctx.fillRect(0, -14, 4, 14);
+      ctx.strokeRect(0, -14, 4, 14);
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(-3, -2, 10, 3);
+      ctx.restore();
+    }
+
+    // 6. Testa
+    ctx.beginPath();
+    ctx.arc(0, -5, radius * 0.78, 0, Math.PI * 2);
+    ctx.fillStyle = role === 'GOBLIN' ? '#65a30d' : skinColor;
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#1e1b18';
+    ctx.stroke();
+
+    // Orecchie a punta se Goblin
+    if (role === 'GOBLIN') {
+      ctx.fillStyle = '#65a30d';
+      ctx.beginPath();
+      ctx.moveTo(-10, -6); ctx.lineTo(-17, -11); ctx.lineTo(-9, -2); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(10, -6); ctx.lineTo(17, -11); ctx.lineTo(9, -2); ctx.fill();
+    }
+
+    // 7. Occhi espressivi con sclera bianca e pupille orientate verso `facing`
+    const lookX = facing.x * 2.8;
+    const lookY = facing.y * 2.2;
+
+    // Sclera bianca
+    ctx.fillStyle = role === 'GOBLIN' ? '#fef08a' : '#ffffff';
+    ctx.beginPath();
+    ctx.arc(-3.6 + lookX * 0.5, -5.5 + lookY * 0.5, 3.1, 0, Math.PI * 2);
+    ctx.arc(3.6 + lookX * 0.5, -5.5 + lookY * 0.5, 3.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pupilla nera/rossa
+    ctx.fillStyle = role === 'GOBLIN' ? '#dc2626' : '#0f172a';
+    ctx.beginPath();
+    ctx.arc(-3.6 + lookX, -5.5 + lookY, 1.6, 0, Math.PI * 2);
+    ctx.arc(3.6 + lookX, -5.5 + lookY, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Punto luce negli occhi
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(-4.1 + lookX, -6.1 + lookY, 0.7, 0, Math.PI * 2);
+    ctx.arc(3.1 + lookX, -6.1 + lookY, 0.7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 8. Cappelli / Elmi specifici per distinguere ogni persona
+    if (role === 'HERO') {
+      // Cappello da Avventuriero con piuma dorata
+      ctx.fillStyle = bodyColor;
+      ctx.beginPath();
+      ctx.ellipse(0, -12, 12, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // Piuma
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.ellipse(6, -16, 3, 6, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (role === 'MINER') {
+      // Elmetto giallo da Minatore con lanterna frontale + barba
+      ctx.fillStyle = '#78350f';
+      ctx.beginPath();
+      ctx.arc(0, 0, 6, 0.2, Math.PI - 0.2);
+      ctx.fill(); // Barba
+      ctx.fillStyle = '#eab308';
+      ctx.beginPath();
+      ctx.arc(0, -9, 9.5, Math.PI, 0);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(0, -12, 3, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (role === 'CARRIER') {
+      // Fascia rossa da Portatore agile
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-9, -12, 18, 4);
+      ctx.strokeRect(-9, -12, 18, 4);
+    } else if (role === 'GUARD') {
+      // Elmo d'argento da Cavaliere con cimiero blu
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.arc(0, -9, 10, Math.PI, 0);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#2563eb';
+      ctx.beginPath();
+      ctx.ellipse(0, -18, 3, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 9. Piccolo badge pulito sopra la testa (solo se necessario)
+    if (label) {
+      ctx.font = 'bold 10px sans-serif';
+      const tw = ctx.measureText(label).width + 10;
+      ctx.fillStyle = 'rgba(20, 14, 8, 0.82)';
+      ctx.beginPath();
+      ctx.roundRect(-tw / 2, -radius - 23, tw, 15, 4);
+      ctx.fill();
+      ctx.fillStyle = '#f8fafc';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, 0, -radius - 12);
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * Disegna targhette stile RPG in legno sotto agli edifici (mai testo che esce dai cerchi!)
+   */
+  static drawBannerTag(ctx, x, y, title, subText = '', borderColor = '#d99b26') {
+    ctx.save();
+    ctx.font = 'bold 11px sans-serif';
+    const w1 = ctx.measureText(title).width;
+    const w2 = subText ? ctx.measureText(subText).width : 0;
+    const boxW = Math.max(w1, w2) + 18;
+    const boxH = subText ? 30 : 19;
+
+    ctx.fillStyle = 'rgba(38, 22, 11, 0.9)';
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(x - boxW / 2, y, boxW, boxH, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#fef3c7';
+    ctx.textAlign = 'center';
+    ctx.fillText(title, x, y + 13);
+    if (subText) {
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText(subText, x, y + 25);
+    }
+    ctx.restore();
+  }
+}
+
+// --- 2. SIMULAZIONE DEL MONDO DI GIOCO (TENUTA RPG) ---
+class EstateWorld {
+  constructor(id, name, heroColor, isBot = false) {
+    this.id = id;
+    this.name = name;
+    this.heroColor = heroColor;
+    this.isBot = isBot;
+    this.initDecorations();
+    this.reset();
+  }
+
+  initDecorations() {
+    // Genera ciuffi d'erba, fiorellini e ciottoli decorativi fissi
+    this.grassTufts = [];
+    for (let i = 0; i < 42; i++) {
+      this.grassTufts.push({
+        x: 35 + Math.random() * (MAP_W - 70),
+        y: 35 + Math.random() * (MAP_H - 70),
+        flower: Math.random() > 0.65 ? (Math.random() > 0.5 ? '#fde047' : '#f472b6') : null
+      });
+    }
+  }
+
+  reset() {
+    this.gold = 60;
+    this.rebirths = 0;
+    this.multiplier = 1;
+    this.sabotagesLaunched = 0;
+
+    this.hero = {
+      x: 340,
+      y: 310,
+      vx: 0,
+      vy: 0,
+      speed: 180,
+      bag: 0,
+      maxBag: 6,
+      facing: { x: 0, y: 1 },
+      walkPhase: 0,
+      attackTimer: 0,
+      attackCooldown: 0,
+      slowCurseTimer: 0
+    };
+
+    // Livelli Strutture & Persone Assunte
+    this.wellLevel = 1;
+    this.forgeLevel = 1;
+    this.goldTrees = 0;
+
+    this.minersCount = 0;
+    this.carriersCount = 0;
+    this.guardsCount = 0;
+
+    // Entità dinamiche sulla mappa
+    this.crystals = [];
+    this.workers = [];  // Contiene MINERS, CARRIERS e GUARDS (tutti con occhi e gambe)
+    this.goblins = [];
+    this.boulders = [];
+    this.sparks = [];
+    this.floatingTexts = [];
+
+    this.spawnTimer = 0;
+    this.treeTimer = 0;
+    this.shrineCooldown = 0;
+
+    // Coordinate degli Edifici Principali
+    this.wellPos    = { x: 165, y: 175, r: 42 }; // Fonte di Cristallo (Nord-Ovest)
+    this.forgePos   = { x: 515, y: 175, r: 44 }; // Fucina Reale (Nord-Est)
+    this.shopPos    = { x: 255, y: 485, r: 52 }; // Emporio & Gilda (Sud-Ovest)
+    this.shrinePos  = { x: 465, y: 485, r: 42 }; // Santuario Rinascita (Sud-Est)
+
+    for (let i = 0; i < 5; i++) this.spawnCrystal();
+  }
+
+  // Costi dinamici del Negozio
+  getPrice(key) {
+    switch (key) {
+      case 'miner':    return Math.floor(65 * Math.pow(1.55, this.minersCount));
+      case 'carrier':  return Math.floor(85 * Math.pow(1.6, this.carriersCount));
+      case 'guard':    return Math.floor(110 * Math.pow(1.65, this.guardsCount));
+      case 'well':     return Math.floor(35 * Math.pow(1.45, this.wellLevel - 1));
+      case 'forge':    return Math.floor(45 * Math.pow(1.5, this.forgeLevel - 1));
+      case 'tree':     return Math.floor(130 * Math.pow(1.6, this.goldTrees));
+      case 'rebirth':  return 1200 * (this.rebirths + 1);
+      case 'sab_goblin':  return 75;
+      case 'sab_boulder': return 110;
+      case 'sab_curse':   return 140;
+      default: return 9999;
+    }
+  }
+
+  buyItem(key, onSabotageCallback) {
+    const cost = this.getPrice(key);
+    if (this.gold < cost) return false;
+    this.gold -= cost;
+
+    if (key === 'miner') {
+      this.minersCount++;
+      this.workers.push({
+        role: 'MINER',
+        x: this.shopPos.x, y: this.shopPos.y - 20,
+        facing: { x: -1, y: -1 }, walkPhase: Math.random() * 5,
+        workTimer: 0, bag: 0
+      });
+      this.addFloatingText(this.shopPos.x, this.shopPos.y - 30, `⛏️ Minatore Nano Assunto!`, '#facc15');
+    } else if (key === 'carrier') {
+      this.carriersCount++;
+      this.workers.push({
+        role: 'CARRIER',
+        x: this.shopPos.x, y: this.shopPos.y - 20,
+        facing: { x: 0, y: -1 }, walkPhase: Math.random() * 5,
+        state: 'FETCH', bag: 0
+      });
+      this.addFloatingText(this.shopPos.x, this.shopPos.y - 30, `🏃 Portatore Veloce Assunto!`, '#4ade80');
+    } else if (key === 'guard') {
+      this.guardsCount++;
+      this.workers.push({
+        role: 'GUARD',
+        x: this.shopPos.x, y: this.shopPos.y - 20,
+        facing: { x: 0, y: 1 }, walkPhase: Math.random() * 5,
+        attackTimer: 0, patrolAngle: Math.random() * 6
+      });
+      this.addFloatingText(this.shopPos.x, this.shopPos.y - 30, `🛡️ Cavaliere di Guardia Assunto!`, '#60a5fa');
+    } else if (key === 'well') {
+      this.wellLevel++;
+      this.addFloatingText(this.wellPos.x, this.wellPos.y - 30, `✨ Fonte Magica Lv.${this.wellLevel}!`, '#38bdf8');
+    } else if (key === 'forge') {
+      this.forgeLevel++;
+      this.hero.maxBag += 3;
+      this.addFloatingText(this.forgePos.x, this.forgePos.y - 30, `🔥 Fucina & Zaino Lv.${this.forgeLevel}!`, '#fb923c');
+    } else if (key === 'tree') {
+      this.goldTrees++;
+      this.addFloatingText(340, 95, `🌳 Albero d'Oro Piantato!`, '#fde047');
+    } else if (key === 'rebirth') {
+      this.executeRebirth();
+    } else if (key.startsWith('sab_')) {
+      this.sabotagesLaunched++;
+      this.addFloatingText(this.hero.x, this.hero.y - 30, `💀 Maledizione Scagliata!`, '#f87171');
+      if (onSabotageCallback) onSabotageCallback(key, this.name);
+    }
+    return true;
+  }
+
+  executeRebirth() {
+    this.rebirths++;
+    this.multiplier = Math.pow(2, this.rebirths);
+    this.gold = 60;
+    this.hero.bag = 0;
+    this.hero.maxBag = 6 + this.rebirths * 3;
+    this.wellLevel = 1;
+    this.forgeLevel = 1;
+    this.goldTrees = 0;
+    this.minersCount = 0;
+    this.carriersCount = 0;
+    this.guardsCount = 0;
+    this.workers = [];
+    this.goblins = [];
+    this.boulders = [];
+    this.addFloatingText(this.shrinePos.x, this.shrinePos.y - 40, `🔥 RINASCITA! Guadagni x${this.multiplier}!`, '#facc15');
+  }
+
+  addFloatingText(x, y, text, color = '#ffffff') {
+    this.floatingTexts.push({ x, y, text, color, life: 1.25 });
+  }
+
+  spawnCrystal(nearWell = true) {
+    if (this.crystals.length >= 24) return;
+    for (let i = 0; i < 20; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const dist = nearWell ? (52 + Math.random() * 62) : (40 + Math.random() * 45);
+      const cx = this.wellPos.x + Math.cos(ang) * dist;
+      const cy = this.wellPos.y + Math.sin(ang) * dist;
+
+      const blocked = this.boulders.some(b => Math.hypot(b.x - cx, b.y - cy) < b.r + 12);
+      if (!blocked && cx > 45 && cx < MAP_W - 45 && cy > 45 && cy < MAP_H - 45) {
+        const epic = Math.random() < (0.18 + this.wellLevel * 0.04);
+        this.crystals.push({
+          x: cx, y: cy,
+          val: epic ? 3 : 1,
+          color: epic ? '#c084fc' : '#38bdf8',
+          phase: Math.random() * 6
+        });
+        break;
+      }
+    }
+  }
+
+  swingHeroSword() {
+    if (this.hero.attackCooldown > 0) return;
+    this.hero.attackTimer = 0.24;
+    this.hero.attackCooldown = 0.40;
+
+    const hitX = this.hero.x + this.hero.facing.x * 28;
+    const hitY = this.hero.y + this.hero.facing.y * 28;
+    this.damageHostilesAt(hitX, hitY, 46, this.hero.facing);
+  }
+
+  damageHostilesAt(x, y, radius, pushDir) {
+    for (let i = this.goblins.length - 1; i >= 0; i--) {
+      const g = this.goblins[i];
+      if (Math.hypot(g.x - x, g.y - y) < radius) {
+        g.hp--;
+        g.x += pushDir.x * 22;
+        g.y += pushDir.y * 22;
+        if (g.hp <= 0) {
+          const bounty = 30 * this.multiplier;
+          this.gold += bounty;
+          this.addFloatingText(g.x, g.y, `Goblin Eliminato! +${bounty}🪙`, '#4ade80');
+          this.goblins.splice(i, 1);
+        } else {
+          this.addFloatingText(g.x, g.y, `Colpito!`, '#f87171');
+        }
+      }
+    }
+
+    for (let i = this.boulders.length - 1; i >= 0; i--) {
+      const b = this.boulders[i];
+      if (Math.hypot(b.x - x, b.y - y) < radius + b.r * 0.4) {
+        b.hp--;
+        if (b.hp <= 0) {
+          this.addFloatingText(b.x, b.y, `Masso Frantumato!`, '#e2e8f0');
+          this.boulders.splice(i, 1);
+        } else {
+          this.addFloatingText(b.x, b.y, `Crack!`, '#fde047');
+        }
+      }
+    }
+  }
+
+  receiveSabotage(type) {
+    if (type === 'sab_goblin') {
+      this.goblins.push({ x: MAP_W / 2, y: 55, hp: 2, stealTimer: 0, walkPhase: 0, facing: { x: 0, y: 1 } });
+      this.addFloatingText(this.hero.x, this.hero.y - 35, `⚠️ UN GOBLIN LADRO STA INFESTANDO LA TENUTA!`, '#ef4444');
+    } else if (type === 'sab_boulder') {
+      for (let i = 0; i < 4; i++) {
+        const a = (Math.PI / 2) * i + 0.35;
+        this.boulders.push({
+          x: this.wellPos.x + Math.cos(a) * 60,
+          y: this.wellPos.y + Math.sin(a) * 60,
+          r: 21, hp: 2
+        });
+      }
+      this.addFloatingText(this.wellPos.x, this.wellPos.y - 30, `🪨 PIOGGIA DI MASSI SULLA FONTE!`, '#fb923c');
+    } else if (type === 'sab_curse') {
+      this.hero.slowCurseTimer = 7.5;
+      this.addFloatingText(this.hero.x, this.hero.y - 35, `⚡ MALEDIZIONE DEL FANGO (RALLENTATO)!`, '#c084fc');
+    }
+  }
+
+  update(dt, onSabotageCallback) {
+    // 1. Spawner automatico della Fonte
+    this.spawnTimer += dt;
+    const interval = Math.max(0.32, 2.0 - this.wellLevel * 0.2);
+    if (this.spawnTimer >= interval) {
+      this.spawnTimer = 0;
+      this.spawnCrystal(true);
+    }
+
+    // 2. Alberi d'Oro
+    if (this.goldTrees > 0) {
+      this.treeTimer += dt;
+      if (this.treeTimer >= 1.5) {
+        this.treeTimer = 0;
+        const gain = Math.floor(this.goldTrees * 14 * this.multiplier);
+        this.gold += gain;
+        this.addFloatingText(340, 75, `+${gain}🪙`, '#fde047');
+      }
+    }
+
+    // 3. Movimento dell'Eroe
+    const h = this.hero;
+    if (h.attackTimer > 0) h.attackTimer -= dt;
+    if (h.attackCooldown > 0) h.attackCooldown -= dt;
+    if (h.slowCurseTimer > 0) h.slowCurseTimer -= dt;
+    if (this.shrineCooldown > 0) this.shrineCooldown -= dt;
+
+    const isMoving = Math.abs(h.vx) > 0.01 || Math.abs(h.vy) > 0.01;
+    if (isMoving) {
+      h.walkPhase += dt;
+      const m = Math.hypot(h.vx, h.vy);
+      h.facing = { x: h.vx / m, y: h.vy / m };
+    }
+
+    const spd = h.slowCurseTimer > 0 ? h.speed * 0.48 : h.speed;
+    let nx = h.x + h.vx * spd * dt;
+    let ny = h.y + h.vy * spd * dt;
+
+    // Collisione con i Massi
+    this.boulders.forEach(b => {
+      const d = Math.hypot(nx - b.x, ny - b.y);
+      if (d < b.r + 14) {
+        const ang = Math.atan2(ny - b.y, nx - b.x);
+        nx = b.x + Math.cos(ang) * (b.r + 14);
+        ny = b.y + Math.sin(ang) * (b.r + 14);
+      }
+    });
+
+    h.x = Math.max(30, Math.min(MAP_W - 30, nx));
+    h.y = Math.max(30, Math.min(MAP_H - 30, ny));
+
+    // 4. Raccolta Cristalli da terra
+    for (let i = this.crystals.length - 1; i >= 0; i--) {
+      const c = this.crystals[i];
+      if (Math.hypot(h.x - c.x, h.y - c.y) < 28 && h.bag < h.maxBag) {
+        h.bag = Math.min(h.maxBag, h.bag + c.val);
+        this.addFloatingText(c.x, c.y, `+${c.val} 💎`, '#38bdf8');
+        this.crystals.splice(i, 1);
+      }
+    }
+
+    // 5. Vendita alla Fucina Reale
+    if (Math.hypot(h.x - this.forgePos.x, h.y - this.forgePos.y) < this.forgePos.r + 18) {
+      if (h.bag > 0) {
+        const earned = Math.floor(h.bag * (12 + this.forgeLevel * 6) * this.multiplier);
+        this.gold += earned;
+        h.bag = 0;
+        this.addFloatingText(this.forgePos.x, this.forgePos.y - 25, `+${earned} 🪙 Forgiati!`, '#facc15');
+      }
+    }
+
+    // 6. Santuario della Rinascita (Passandoci sopra quando si ha abbastanza oro)
+    if (this.shrineCooldown <= 0 && Math.hypot(h.x - this.shrinePos.x, h.y - this.shrinePos.y) < this.shrinePos.r + 8) {
+      if (this.gold >= this.getPrice('rebirth')) {
+        this.shrineCooldown = 1.0;
+        this.buyItem('rebirth', onSabotageCallback);
+      }
+    }
+
+    // 7. Intelligenza ed Animazione delle Persone Assunte (Minatori, Portatori, Guardie)
+    this.workers.forEach((w, idx) => {
+      w.walkPhase += dt;
+
+      if (w.role === 'MINER') {
+        // Il Minatore Nano cammina fino al bordo della Fonte e piccona estraendo cristalli extra
+        const angle = (idx * 1.3) % (Math.PI * 2);
+        const tx = this.wellPos.x + Math.cos(angle) * (this.wellPos.r + 12);
+        const ty = this.wellPos.y + Math.sin(angle) * (this.wellPos.r + 12);
+        const dx = tx - w.x;
+        const dy = ty - w.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > 6) {
+          w.x += (dx / dist) * 90 * dt;
+          w.y += (dy / dist) * 90 * dt;
+          w.facing = { x: dx / dist, y: dy / dist };
+        } else {
+          w.facing = { x: -Math.cos(angle), y: -Math.sin(angle) };
+          w.workTimer += dt;
+          if (w.workTimer >= 2.2) {
+            w.workTimer = 0;
+            this.spawnCrystal(true);
+            this.addFloatingText(w.x, w.y - 15, `⛏️ Clink!`, '#fde047');
+          }
+        }
+      } else if (w.role === 'CARRIER') {
+        // Il Portatore Veloce raccoglie i cristalli e li porta alla Fucina
+        const spdC = 118 * dt;
+        if (w.state === 'FETCH') {
+          if (this.crystals.length > 0) {
+            const target = this.crystals[0];
+            const dx = target.x - w.x;
+            const dy = target.y - w.y;
+            const d = Math.hypot(dx, dy);
+            if (d < 14) {
+              w.bag = target.val;
+              this.crystals.splice(0, 1);
+              w.state = 'DELIVER';
+            } else {
+              w.x += (dx / d) * spdC;
+              w.y += (dy / d) * spdC;
+              w.facing = { x: dx / d, y: dy / d };
+            }
+          }
+        } else {
+          const dx = this.forgePos.x - w.x;
+          const dy = this.forgePos.y - w.y;
+          const d = Math.hypot(dx, dy);
+          if (d < 22) {
+            const gain = Math.floor(w.bag * (10 + this.forgeLevel * 5) * this.multiplier);
+            this.gold += gain;
+            w.bag = 0;
+            w.state = 'FETCH';
+            this.addFloatingText(this.forgePos.x, this.forgePos.y - 10, `+${gain}🪙`, '#fde047');
+          } else {
+            w.x += (dx / d) * spdC;
+            w.y += (dy / d) * spdC;
+            w.facing = { x: dx / d, y: dy / d };
+          }
+        }
+      } else if (w.role === 'GUARD') {
+        // Il Cavaliere di Guardia pattuglia la tenuta e attacca automaticamente Goblin e Massi!
+        if (w.attackTimer > 0) w.attackTimer -= dt;
+        const targetHostile = this.goblins[0] || this.boulders[0];
+
+        if (targetHostile) {
+          const dx = targetHostile.x - w.x;
+          const dy = targetHostile.y - w.y;
+          const d = Math.hypot(dx, dy);
+          w.facing = { x: dx / (d || 1), y: dy / (d || 1) };
+
+          if (d > 28) {
+            w.x += (dx / d) * 125 * dt;
+            w.y += (dy / d) * 125 * dt;
+          } else if (w.attackTimer <= 0) {
+            w.attackTimer = 0.35;
+            this.damageHostilesAt(w.x + w.facing.x * 20, w.y + w.facing.y * 20, 42, w.facing);
+          }
+        } else {
+          // Pattugliamento circolare intorno al centro della tenuta
+          w.patrolAngle += dt * 0.8;
+          const px = 340 + Math.cos(w.patrolAngle + idx) * 90;
+          const py = 310 + Math.sin(w.patrolAngle + idx) * 60;
+          const dx = px - w.x;
+          const dy = py - w.y;
+          const d = Math.hypot(dx, dy);
+          if (d > 4) {
+            w.x += (dx / d) * 80 * dt;
+            w.y += (dy / d) * 80 * dt;
+            w.facing = { x: dx / d, y: dy / d };
+          }
+        }
+      }
+    });
+
+    // 8. Movimento ed Azione dei Goblin Ladri
+    this.goblins.forEach(g => {
+      g.walkPhase += dt;
+      if (g.stealTimer > 0) g.stealTimer -= dt;
+      const dx = h.x - g.x;
+      const dy = h.y - g.y;
+      const d = Math.hypot(dx, dy);
+      g.facing = { x: dx / (d || 1), y: dy / (d || 1) };
+
+      if (d > 16) {
+        g.x += (dx / d) * 112 * dt;
+        g.y += (dy / d) * 112 * dt;
+      } else if (g.stealTimer <= 0) {
+        g.stealTimer = 1.5;
+        if (h.bag > 0) {
+          h.bag = Math.max(0, h.bag - 2);
+          this.addFloatingText(h.x, h.y - 20, `👹 Goblin ruba cristalli!`, '#ef4444');
+        } else if (this.gold >= 15) {
+          this.gold -= 15;
+          this.addFloatingText(h.x, h.y - 20, `👹 -15🪙 Rubati! Usa SPAZIO!`, '#ef4444');
+        }
+      }
+    });
+
+    // 9. Aggiorna testi fluttuanti
+    for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+      this.floatingTexts[i].y -= 26 * dt;
+      this.floatingTexts[i].life -= dt;
+      if (this.floatingTexts[i].life <= 0) this.floatingTexts.splice(i, 1);
+    }
+  }
+
+  getProgress() {
+    return Math.min(1, Math.max(this.gold / TARGET_GOLD, this.rebirths / TARGET_REBIRTHS));
+  }
+
+  hasWon() {
+    return this.gold >= TARGET_GOLD || this.rebirths >= TARGET_REBIRTHS;
+  }
+
+  serialize() {
+    return {
+      id: this.id, name: this.name, gold: this.gold, rebirths: this.rebirths, multiplier: this.multiplier,
+      hero: this.hero, wellLevel: this.wellLevel, forgeLevel: this.forgeLevel, goldTrees: this.goldTrees,
+      minersCount: this.minersCount, carriersCount: this.carriersCount, guardsCount: this.guardsCount,
+      crystals: this.crystals, workers: this.workers, goblins: this.goblins, boulders: this.boulders
+    };
+  }
+
+  applySnapshot(s) {
+    Object.assign(this, s);
+  }
+}
+
+// --- 3. INTELLIGENZA ARTIFICIALE DEL BOT ---
+class RivalBotAI {
+  constructor(world, onSabotageCallback) {
+    this.world = world;
+    this.onSabotageCallback = onSabotageCallback;
+    this.thinkTimer = 0;
+    this.target = { x: 340, y: 310 };
+    this.pauseTimer = 0;
+  }
+
+  update(dt) {
+    const w = this.world;
+    const h = w.hero;
+
+    // Difesa con spada se un Goblin o un Masso è vicino
+    const threat = w.goblins.find(g => Math.hypot(g.x - h.x, g.y - h.y) < 46) ||
+                   w.boulders.find(b => Math.hypot(b.x - h.x, b.y - h.y) < 46);
+    if (threat) {
+      const ang = Math.atan2(threat.y - h.y, threat.x - h.x);
+      h.facing = { x: Math.cos(ang), y: Math.sin(ang) };
+      w.swingHeroSword();
+    }
+
+    if (this.pauseTimer > 0) {
+      this.pauseTimer -= dt;
+      h.vx = 0; h.vy = 0;
+      return;
+    }
+
+    this.thinkTimer -= dt;
+    if (this.thinkTimer <= 0) {
+      this.thinkTimer = 0.35 + Math.random() * 0.25;
+
+      // Piccola esitazione umana simulata
+      if (Math.random() < 0.08) {
+        this.pauseTimer = 0.22;
+        return;
+      }
+
+      // 1. Se può fare la Rinascita, va al Santuario!
+      if (w.gold >= w.getPrice('rebirth')) {
+        this.target = { x: w.shrinePos.x, y: w.shrinePos.y };
+      }
+      // 2. Se ha abbastanza oro per assumere lavoratori, potenziare o sabotare, va all'Emporio!
+      else if (w.gold >= 75 && Math.random() < 0.65) {
+        this.target = { x: w.shopPos.x, y: w.shopPos.y + 15 };
+        if (Math.hypot(h.x - w.shopPos.x, h.y - w.shopPos.y) < 68) {
+          this.botMakeSmartPurchase();
+        }
+      }
+      // 3. Se c'è un Goblin ladro e non ha guardie, lo insegue
+      else if (w.goblins.length > 0 && w.guardsCount === 0) {
+        this.target = { x: w.goblins[0].x, y: w.goblins[0].y };
+      }
+      // 4. Se ha lo zaino pieno, va alla Fucina
+      else if (h.bag >= h.maxBag * 0.7 || (h.bag > 0 && w.crystals.length === 0)) {
+        this.target = { x: w.forgePos.x, y: w.forgePos.y };
+      }
+      // 5. Altrimenti raccoglie il cristallo più vicino
+      else if (w.crystals.length > 0) {
+        let best = w.crystals[0];
+        let minD = Infinity;
+        w.crystals.forEach(c => {
+          const d = Math.hypot(c.x - h.x, c.y - h.y);
+          if (d < minD) { minD = d; best = c; }
+        });
+        this.target = { x: best.x, y: best.y };
+      }
+    }
+
+    const dx = this.target.x - h.x;
+    const dy = this.target.y - h.y;
+    const d = Math.hypot(dx, dy);
+    if (d > 8) {
+      h.vx = dx / d;
+      h.vy = dy / d;
+    } else {
+      h.vx = 0;
+      h.vy = 0;
+    }
+  }
+
+  botMakeSmartPurchase() {
+    const w = this.world;
+    const choices = ['carrier', 'miner', 'well', 'forge', 'guard', 'tree', 'sab_goblin', 'sab_boulder', 'sab_curse'];
+    const affordable = choices.filter(k => w.gold >= w.getPrice(k));
+    if (affordable.length > 0) {
+      const pick = affordable[Math.floor(Math.random() * affordable.length)];
+      w.buyItem(pick, this.onSabotageCallback);
+    }
+  }
+}
+
+// --- 4. RENDERER DELLA MAPPA E DEGLI EDIFICI DETTAGLIATI ---
+class EstateRenderer {
+  static renderViewport(ctx, world, vx, vy, vw, vh, headerTitle) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(vx, vy, vw, vh);
+    ctx.clip();
+
+    let camX = world.hero.x - vw / 2;
+    let camY = world.hero.y - vh / 2;
+    camX = Math.max(0, Math.min(MAP_W - vw, camX));
+    camY = Math.max(0, Math.min(MAP_H - vh, camY));
+    if (vw > MAP_W) camX = -(vw - MAP_W) / 2;
+    if (vh > MAP_H) camY = -(vh - MAP_H) / 2;
+
+    ctx.translate(vx - camX, vy - camY);
+
+    // Acqua circostante
+    ctx.fillStyle = '#1d4ed8';
+    ctx.fillRect(camX, camY, vw, vh);
+
+    // Prato principale
+    ctx.fillStyle = '#4d8c3a';
+    ctx.beginPath();
+    ctx.roundRect(8, 8, MAP_W - 16, MAP_H - 16, 18);
+    ctx.fill();
+
+    // Bordo erboso interno e ciuffi d'erba/fiori
+    world.grassTufts.forEach(gt => {
+      ctx.fillStyle = '#3f772e';
+      ctx.fillRect(gt.x, gt.y, 10, 4);
+      ctx.fillRect(gt.x + 3, gt.y - 3, 4, 4);
+      if (gt.flower) {
+        ctx.fillStyle = gt.flower;
+        ctx.beginPath();
+        ctx.arc(gt.x + 5, gt.y - 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    // Strade lastricate in pietra chiara che collegano gli edifici
+    ctx.fillStyle = '#d6c3a5';
+    ctx.strokeStyle = '#b8a07e';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(145, 150, 390, 56, 22);
+    ctx.roundRect(310, 175, 60, 325, 22);
+    ctx.roundRect(215, 455, 290, 62, 22);
+    ctx.fill();
+    ctx.stroke();
+
+    // Staccionata perimetrale in legno
+    ctx.strokeStyle = '#432818';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(12, 12, MAP_W - 24, MAP_H - 24);
+
+    // 1. Disegna ALBERI D'ORO (Frutteto Reale a Nord)
+    for (let t = 0; t < Math.min(8, world.goldTrees); t++) {
+      const tx = 235 + (t % 4) * 68;
+      const ty = 72 + Math.floor(t / 4) * 45;
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.beginPath(); ctx.ellipse(tx, ty + 14, 16, 7, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#5c3419';
+      ctx.fillRect(tx - 5, ty - 2, 10, 16);
+      ctx.fillStyle = '#15803d';
+      ctx.beginPath(); ctx.arc(tx, ty - 10, 17, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#14532d'; ctx.lineWidth = 2; ctx.stroke();
+      // Mele/Frutti d'oro
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(tx - 6, ty - 12, 3.5, 0, Math.PI * 2);
+      ctx.arc(tx + 7, ty - 8, 3.5, 0, Math.PI * 2);
+      ctx.arc(tx, ty - 17, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 2. Disegna la FONTE DI CRISTALLO (Nord-Ovest)
+    const wl = world.wellPos;
+    ctx.save();
+    ctx.translate(wl.x, wl.y);
+    ctx.fillStyle = '#64748b';
+    ctx.beginPath(); ctx.arc(0, 0, wl.r, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = '#334155'; ctx.stroke();
+    ctx.fillStyle = '#0284c7';
+    ctx.beginPath(); ctx.arc(0, 0, wl.r - 10, 0, Math.PI * 2); ctx.fill();
+    // Guglia di cristallo centrale pulsante
+    const pulse = Math.sin(performance.now() * 0.005) * 3;
+    ctx.fillStyle = '#7dd3fc';
+    ctx.beginPath();
+    ctx.moveTo(0, -18 - pulse);
+    ctx.lineTo(13, 4);
+    ctx.lineTo(0, 14);
+    ctx.lineTo(-13, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.restore();
+    ArtStudio.drawBannerTag(ctx, wl.x, wl.y + wl.r + 6, `FONTE MAGICA (Lv.${world.wellLevel})`, '', '#38bdf8');
+
+    // 3. Disegna la FUCINA REALE (Nord-Est)
+    const fg = world.forgePos;
+    ctx.save();
+    ctx.translate(fg.x, fg.y);
+    ctx.fillStyle = '#475569';
+    ctx.beginPath(); ctx.roundRect(-42, -34, 84, 68, 10); ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#1e293b'; ctx.stroke();
+    // Tetto scuro e fornace ardente
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(-36, -28, 72, 22);
+    ctx.fillStyle = '#ea580c';
+    ctx.beginPath(); ctx.arc(-12, 8, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath(); ctx.arc(-12, 8, 8, 0, Math.PI * 2); ctx.fill();
+    // Incudine dorata a destra
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(10, 2, 20, 12);
+    ctx.restore();
+    ArtStudio.drawBannerTag(ctx, fg.x, fg.y + fg.r + 4, `FUCINA REALE (Lv.${world.forgeLevel})`, `Avvicinati per vendere 💎`, '#fb923c');
+
+    // 4. Disegna L'EMPORIO & GILDA LAVORATORI (Sud-Ovest - Edificio dettagliato)
+    const sh = world.shopPos;
+    ctx.save();
+    ctx.translate(sh.x, sh.y);
+    // Ombra edificio
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath(); ctx.roundRect(-54, -30, 108, 74, 10); ctx.fill();
+    // Mura in legno e pietra
+    ctx.fillStyle = '#f3e5ab';
+    ctx.strokeStyle = '#432818';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(-48, -32, 96, 66, 8); ctx.fill(); ctx.stroke();
+    // Tetto a tendoni bianchi e rossi da mercato medievale
+    for (let i = -3; i <= 2; i++) {
+      ctx.fillStyle = i % 2 === 0 ? '#dc2626' : '#fef2f2';
+      ctx.fillRect(i * 16, -38, 16, 22);
+      ctx.strokeRect(i * 16, -38, 16, 22);
+    }
+    // Bancone con il Mercante che guarda fuori
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(-30, -2, 60, 16);
+    ctx.fillStyle = '#fed7aa';
+    ctx.beginPath(); ctx.arc(0, -6, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath(); ctx.arc(-2.5, -7, 1.5, 0, Math.PI * 2); ctx.arc(2.5, -7, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ArtStudio.drawBannerTag(ctx, sh.x, sh.y + 40, `🏪 EMPORIO & GILDA`, `Premi [E] o Clicca per Assumere`, '#facc15');
+
+    // 5. Disegna IL SANTUARIO DELLA RINASCITA (Sud-Est)
+    const sr = world.shrinePos;
+    const canReb = world.gold >= world.getPrice('rebirth');
+    ctx.save();
+    ctx.translate(sr.x, sr.y);
+    ctx.fillStyle = '#581c87';
+    ctx.beginPath(); ctx.arc(0, 0, sr.r, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = canReb ? '#fde047' : '#a855f7'; ctx.stroke();
+    ctx.fillStyle = '#c084fc';
+    ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ArtStudio.drawBannerTag(ctx, sr.x, sr.y + sr.r + 6, `🔥 SANTUARIO RINASCITA`, `Costo: ${world.getPrice('rebirth')} 🪙`, '#c084fc');
+
+    // 6. Disegna i Cristalli a terra
+    const tNow = performance.now() * 0.005;
+    world.crystals.forEach(c => {
+      const fy = c.y + Math.sin(tNow + c.phase) * 3;
+      ctx.save();
+      ctx.translate(c.x, fy);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = c.color;
+      ctx.fillRect(-7, -7, 14, 14);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.8;
+      ctx.strokeRect(-7, -7, 14, 14);
+      ctx.restore();
+    });
+
+    // 7. Disegna i Massi Ostacolo
+    world.boulders.forEach(b => {
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.fillStyle = '#57534e';
+      ctx.beginPath(); ctx.arc(0, 0, b.r, 0, Math.PI * 2); ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = '#292524'; ctx.stroke();
+      ctx.fillStyle = '#78716c';
+      ctx.beginPath(); ctx.arc(-5, -5, b.r * 0.45, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    });
+
+    // 8. Disegna Tutte le Persone Assunte (con occhi, piedi animati, elmetti e armi)
+    world.workers.forEach(w => {
+      let bodyCol = '#d97706';
+      if (w.role === 'CARRIER') bodyCol = '#16a34a';
+      if (w.role === 'GUARD') bodyCol = '#475569';
+
+      ArtStudio.drawCharacter(ctx, {
+        x: w.x, y: w.y, radius: 12,
+        bodyColor: bodyCol,
+        facing: w.facing,
+        walkPhase: w.walkPhase,
+        isMoving: true,
+        role: w.role,
+        bagCount: w.bag || 0,
+        attackTimer: w.attackTimer || 0
+      });
+    });
+
+    // 9. Disegna i Goblin Ladri (con orecchie a punta, occhi gialli/rossi e piedi)
+    world.goblins.forEach(g => {
+      ArtStudio.drawCharacter(ctx, {
+        x: g.x, y: g.y, radius: 13,
+        bodyColor: '#991b1b',
+        facing: g.facing,
+        walkPhase: g.walkPhase,
+        isMoving: true,
+        role: 'GOBLIN',
+        label: '👹 Ladro'
+      });
+    });
+
+    // 10. Disegna L'EROE DEL GIOCATORE
+    const h = world.hero;
+    const heroMoving = Math.abs(h.vx) > 0.01 || Math.abs(h.vy) > 0.01;
+    ArtStudio.drawCharacter(ctx, {
+      x: h.x, y: h.y, radius: 15,
+      bodyColor: world.heroColor,
+      facing: h.facing,
+      walkPhase: h.walkPhase,
+      isMoving: heroMoving,
+      role: 'HERO',
+      bagCount: h.bag,
+      maxBag: h.maxBag,
+      attackTimer: h.attackTimer,
+      slowCurse: h.slowCurseTimer > 0,
+      label: `💎 ${h.bag}/${h.maxBag}`
+    });
+
+    // 11. Testi Fluttuanti
+    world.floatingTexts.forEach(ft => {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, ft.life);
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#000000';
+      ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
+      ctx.fillStyle = ft.color;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
+    });
+
+    ctx.restore();
+
+    // Intestazione della Telecamera in alto a sinistra
+    ctx.save();
+    ctx.fillStyle = 'rgba(38, 22, 11, 0.88)';
+    ctx.strokeStyle = '#e09f24';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(vx + 12, vy + 12, 245, 28, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fef3c7';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(headerTitle, vx + 22, vy + 30);
+    ctx.restore();
+  }
+}
+
+// --- 5. NETWORKING WEBRTC P2P ZERO-SERVER ---
+class LanPeerHub {
+  constructor(onPacket, onPeersUpdate) {
+    this.isHost = false;
+    this.peers = [];
+    this.pending = null;
+    this.clientPc = null;
+    this.clientChan = null;
+    this.onPacket = onPacket;
+    this.onPeersUpdate = onPeersUpdate;
+  }
+
+  async createInvite(onCode) {
+    this.isHost = true;
+    const pc = new RTCPeerConnection({ iceServers: [] });
+    const chan = pc.createDataChannel('realms_' + Date.now());
+    const entry = { id: 'p_' + (this.peers.length + 2), pc, chan, open: false };
+    this.pending = entry;
+
+    chan.onopen = () => {
+      entry.open = true;
+      this.peers.push(entry);
+      this.pending = null;
+      if (this.onPeersUpdate) this.onPeersUpdate(this.peers.length + 1);
+    };
+    chan.onmessage = (e) => this.onPacket && this.onPacket(JSON.parse(e.data), entry.id);
+
+    pc.onicecandidate = (e) => {
+      if (!e.candidate) onCode(btoa(JSON.stringify(pc.localDescription)));
+    };
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+  }
+
+  async acceptAnswer(ansCode) {
+    if (!this.pending) return;
+    await this.pending.pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(ansCode))));
+  }
+
+  async joinHost(offerCode, onAnsCode, onConnected) {
+    this.isHost = false;
+    this.clientPc = new RTCPeerConnection({ iceServers: [] });
+    this.clientPc.ondatachannel = (e) => {
+      this.clientChan = e.channel;
+      this.clientChan.onopen = () => onConnected && onConnected();
+      this.clientChan.onmessage = (ev) => this.onPacket && this.onPacket(JSON.parse(ev.data), 'host');
+    };
+    this.clientPc.onicecandidate = (e) => {
+      if (!e.candidate) onAnsCode(btoa(JSON.stringify(this.clientPc.localDescription)));
+    };
+    await this.clientPc.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(offerCode))));
+    const ans = await this.clientPc.createAnswer();
+    await this.clientPc.setLocalDescription(ans);
+  }
+
+  broadcast(obj) {
+    const raw = JSON.stringify(obj);
+    this.peers.forEach(p => { if (p.open && p.chan.readyState === 'open') p.chan.send(raw); });
+  }
+
+  sendToHost(obj) {
+    if (this.clientChan && this.clientChan.readyState === 'open') {
+      this.clientChan.send(JSON.stringify(obj));
+    }
+  }
+
+  close() {
+    this.peers.forEach(p => p.pc.close());
+    if (this.pending) this.pending.pc.close();
+    if (this.clientPc) this.clientPc.close();
+    this.peers = [];
+  }
+}
+
+// --- 6. APPLICAZIONE PRINCIPALE & LOGICA NEGOZIO INTERATTIVO ---
+const Game = {
+  mode: 'BOT',
+  myWorld: null,
+  rivals: [],
+  botAI: null,
+  net: null,
+  keys: {},
+  running: false,
+  shopOpen: false,
+  activeShopTab: 'workers',
+  lastTime: 0,
+  syncAccum: 0,
+
+  init() {
+    window.addEventListener('keydown', (e) => {
+      this.keys[e.code] = true;
+      if (!this.running) return;
+
+      if (e.code === 'Space' && !this.shopOpen) {
+        e.preventDefault();
+        this.myWorld.swingHeroSword();
+      } else if (e.code === 'KeyE' || (e.code === 'Escape' && this.shopOpen)) {
+        e.preventDefault();
+        this.toggleShop();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      this.keys[e.code] = false;
+    });
+
+    // Click diretto sull'edificio dell'Emporio sul Canvas per aprirlo
+    const canvas = document.getElementById('gameCanvas');
+    canvas.addEventListener('click', (e) => {
+      if (!this.running || this.shopOpen) return;
+      const rect = canvas.getBoundingClientRect();
+      const sx = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const sy = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+      // Verifica se il giocatore ha cliccato vicino al suo Emporio o se è vicino fisicamente
+      const distHeroToShop = Math.hypot(this.myWorld.hero.x - this.myWorld.shopPos.x, this.myWorld.hero.y - this.myWorld.shopPos.y);
+      if (distHeroToShop < 95 || sy > canvas.height * 0.62) {
+        this.toggleShop(true);
+      }
+    });
+  },
+
+  showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  },
+
+  toast(text) {
+    const b = document.getElementById('toast-banner');
+    b.innerText = text;
+    b.style.opacity = '1';
+    clearTimeout(this._tTimer);
+    this._tTimer = setTimeout(() => { b.style.opacity = '0'; }, 3200);
+  },
+
+  // --- GESTIONE NEGOZIO ANIMATO ---
+  toggleShop(forceState) {
+    this.shopOpen = typeof forceState === 'boolean' ? forceState : !this.shopOpen;
+    const modal = document.getElementById('shop-modal');
+    if (this.shopOpen) {
+      modal.classList.add('open');
+      this.renderShopItems();
+    } else {
+      modal.classList.remove('open');
+    }
+  },
+
+  switchShopTab(tabName) {
+    this.activeShopTab = tabName;
+    document.querySelectorAll('.shop-tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-btn-' + tabName).classList.add('active');
+
+    const quotes = {
+      workers: '"Recluta persone in carne ed ossa! I Minatori scavano alla fonte, i Portatori vendono per te e le Guardie eliminano i Goblin!"',
+      upgrades: '"Espandi le tue strutture! Una Fonte più ricca e Alberi d\'Oro ti porteranno rapidamente alla Corona!"',
+      sabotage: '"Vuoi rallentare il tuo rivale? Spediscigli una banda di Goblin ladri o blocca la sua fonte con una pioggia di massi!"'
+    };
+    document.getElementById('merchant-quote').innerText = quotes[tabName];
+    this.renderShopItems();
+  },
+
+  renderShopItems() {
+    if (!this.myWorld || !this.shopOpen) return;
+    document.getElementById('shop-gold-display').innerText = this.myWorld.gold;
+    const container = document.getElementById('shop-items-container');
+
+    const w = this.myWorld;
+    let items = [];
+
+    if (this.activeShopTab === 'workers') {
+      items = [
+        {
+          key: 'miner',
+          title: 'Minatore Nano con Elmetto',
+          desc: 'Va alla Fonte e piccona estraendo continuamente nuovi cristalli.',
+          owned: `Attivi: ${w.minersCount}`,
+          svg: `<svg width="40" height="40" viewBox="0 0 40 40">
+            <circle cx="20" cy="22" r="11" fill="#fed7aa" stroke="#291509" stroke-width="2"/>
+            <path d="M11 25 Q20 36 29 25 Z" fill="#78350f"/>
+            <path d="M9 18 A11 11 0 0 1 31 18 Z" fill="#eab308" stroke="#291509" stroke-width="2"/>
+            <circle cx="20" cy="13" r="3" fill="#fef08a"/>
+            <circle cx="16" cy="21" r="2" fill="#0f172a"/><circle cx="24" cy="21" r="2" fill="#0f172a"/>
+          </svg>`
+        },
+        {
+          key: 'carrier',
+          title: 'Portatore Veloce',
+          desc: 'Corre per la tenuta, raccoglie i cristalli a terra e li vende alla Fucina.',
+          owned: `Attivi: ${w.carriersCount}`,
+          svg: `<svg width="40" height="40" viewBox="0 0 40 40">
+            <circle cx="20" cy="22" r="11" fill="#fed7aa" stroke="#291509" stroke-width="2"/>
+            <rect x="9" y="13" width="22" height="5" fill="#dc2626" stroke="#291509" stroke-width="1.5"/>
+            <circle cx="16" cy="22" r="2" fill="#0f172a"/><circle cx="24" cy="22" r="2" fill="#0f172a"/>
+          </svg>`
+        },
+        {
+          key: 'guard',
+          title: 'Cavaliere di Guardia',
+          desc: 'Pattuglia con la spada: uccide i Goblin ladri e spacca i massi automaticamente!',
+          owned: `Attivi: ${w.guardsCount}`,
+          svg: `<svg width="40" height="40" viewBox="0 0 40 40">
+            <circle cx="20" cy="23" r="11" fill="#fed7aa" stroke="#291509" stroke-width="2"/>
+            <path d="M9 19 A11 11 0 0 1 31 19 Z" fill="#94a3b8" stroke="#1e293b" stroke-width="2"/>
+            <ellipse cx="20" cy="7" rx="3" ry="5" fill="#2563eb"/>
+            <circle cx="16" cy="22" r="2" fill="#0f172a"/><circle cx="24" cy="22" r="2" fill="#0f172a"/>
+          </svg>`
+        }
+      ];
+    } else if (this.activeShopTab === 'upgrades') {
+      items = [
+        {
+          key: 'well',
+          title: 'Potenzia Fonte Magica',
+          desc: 'Genera cristalli più velocemente e aumenta la probabilità di gemme viola.',
+          owned: `Livello: ${w.wellLevel}`,
+          svg: `💎`
+        },
+        {
+          key: 'forge',
+          title: 'Fucina & Zaino Capiente',
+          desc: 'Aumenta l\'oro guadagnato per ogni cristallo e aggiunge +3 posti nello zaino.',
+          owned: `Livello: ${w.forgeLevel}`,
+          svg: `🔥`
+        },
+        {
+          key: 'tree',
+          title: 'Pianta Albero d\'Oro',
+          desc: 'Albero sacro nel frutteto a nord che produce monete d\'oro ogni 1.5 secondi.',
+          owned: `Piantati: ${w.goldTrees}/8`,
+          svg: `🌳`
+        },
+        {
+          key: 'rebirth',
+          title: 'Rinascita Reale (Rebirth)',
+          desc: 'Ricomincia con moltiplicatore permanente x2 su tutti i guadagni! (3 per vincere)',
+          owned: `Rinascite: ${w.rebirths}/3`,
+          svg: `👑`
+        }
+      ];
+    } else if (this.activeShopTab === 'sabotage') {
+      items = [
+        {
+          key: 'sab_goblin',
+          title: 'Spedisci Goblin Ladro',
+          desc: 'Evoca un Goblin armato nella tenuta del rivale che gli insegue l\'eroe e ruba oro!',
+          owned: `Sabotaggio Diretto`,
+          svg: `👹`
+        },
+        {
+          key: 'sab_boulder',
+          title: 'Pioggia di Massi Giganti',
+          desc: 'Fa precipitare 4 rocce attorno alla Fonte del rivale bloccando il passaggio.',
+          owned: `Ostacolo Fisico`,
+          svg: `🪨`
+        },
+        {
+          key: 'sab_curse',
+          title: 'Maledizione del Fango',
+          desc: 'Dimezza la velocità di movimento dell\'eroe avversario per 7.5 secondi.',
+          owned: `Debuff Movimento`,
+          svg: `⚡`
+        }
+      ];
+    }
+
+    container.innerHTML = items.map(it => {
+      const price = w.getPrice(it.key);
+      const canAfford = w.gold >= price;
+      const iconHtml = it.svg.startsWith('<svg') ? it.svg : `<span style="font-size:1.7rem;">${it.svg}</span>`;
+      return `
+        <div class="shop-item-card">
+          <div class="item-left">
+            <div class="item-icon-box">${iconHtml}</div>
+            <div class="item-info">
+              <h4>${it.title}</h4>
+              <p>${it.desc}</p>
+              <span class="item-badge-count">${it.owned}</span>
+            </div>
+          </div>
+          <button class="${canAfford ? 'btn-green' : ''}" ${canAfford ? '' : 'disabled'} onclick="Game.purchaseFromShop('${it.key}')">
+            ${price} 🪙
+          </button>
+        </div>
+      `;
+    }).join('');
+  },
+
+  purchaseFromShop(key) {
+    if (!this.myWorld) return;
+    const ok = this.myWorld.buyItem(key, (sabKey, fromName) => this.dispatchSabotage(sabKey, fromName));
+    if (ok) {
+      this.renderShopItems();
+      this.updateHUD();
+    }
+  },
+
+  // --- AVVIO PARTITA VS BOT (SPLIT-SCREEN) ---
+  startBotMatch() {
+    this.mode = 'BOT';
+    this.myWorld = new EstateWorld('p1', 'Tu (Eroe Blu)', '#2563eb', false);
+    const botWorld = new EstateWorld('bot', 'Rival Bot', '#dc2626', true);
+    this.rivals = [botWorld];
+    this.botAI = new RivalBotAI(botWorld, (sabKey, fromName) => this.dispatchSabotage(sabKey, fromName));
+    this.startLoop();
+  },
+
+  // --- AVVIO PARTITA LAN P2P ---
+  setupLanHost() {
+    this.mode = 'LAN_HOST';
+    this.showScreen('screen-lan-lobby');
+    document.getElementById('host-lobby-panel').style.display = 'block';
+    document.getElementById('client-lobby-panel').style.display = 'none';
+    document.getElementById('host-offer-txt').value = '';
+    document.getElementById('host-answer-txt').value = '';
+
+    this.net = new LanPeerHub(
+      (pkt, senderId) => this.onLanPacket(pkt, senderId),
+      (count) => {
+        document.getElementById('host-player-count').innerText = `${count} Connessi`;
+        this.toast(`Giocatore connesso! Totale: ${count}`);
+      }
+    );
+  },
+
+  hostCreateOffer() {
+    document.getElementById('host-offer-txt').value = 'Generazione in corso...';
+    this.net.createInvite(code => {
+      document.getElementById('host-offer-txt').value = code;
+    });
+  },
+
+  hostAcceptAnswer() {
+    const code = document.getElementById('host-answer-txt').value.trim();
+    if (!code) return;
+    this.net.acceptAnswer(code);
+    document.getElementById('host-answer-txt').value = '';
+    document.getElementById('host-offer-txt').value = '';
+  },
+
+  hostLaunchLanGame() {
+    this.myWorld = new EstateWorld('host', 'Lord Host', '#2563eb', false);
+    this.rivals = this.net.peers.map((p, i) => new EstateWorld(p.id, `Rivale #${i + 2}`, '#dc2626', false));
+    this.net.broadcast({ type: 'START' });
+    this.startLoop();
+  },
+
+  setupLanClient() {
+    this.mode = 'LAN_CLIENT';
+    this.showScreen('screen-lan-lobby');
+    document.getElementById('host-lobby-panel').style.display = 'none';
+    document.getElementById('client-lobby-panel').style.display = 'block';
+    this.net = new LanPeerHub((pkt) => this.onLanPacket(pkt, 'host'));
+  },
+
+  clientGenerateAnswer() {
+    const offer = document.getElementById('client-offer-txt').value.trim();
+    if (!offer) return;
+    this.net.joinHost(
+      offer,
+      (ans) => {
+        document.getElementById('client-answer-txt').value = ans;
+        document.getElementById('client-lobby-status').innerText = 'Copia la risposta e inviala all\'Host!';
+      },
+      () => {
+        document.getElementById('client-lobby-status').innerText = 'Connesso! Attendi che l\'Host avvii la partita...';
+      }
+    );
+  },
+
+  cancelLan() {
+    if (this.net) this.net.close();
+    this.showScreen('screen-menu');
+  },
+
+  onLanPacket(pkt, fromId) {
+    if (pkt.type === 'START') {
+      this.myWorld = new EstateWorld('client_' + Math.floor(Math.random()*900), 'Eroe Client', '#16a34a', false);
+      this.rivals = [new EstateWorld('host', 'Lord Host', '#dc2626', false)];
+      this.startLoop();
+    } else if (pkt.type === 'SYNC') {
+      if (this.mode === 'LAN_HOST') {
+        let rw = this.rivals.find(r => r.id === fromId);
+        if (!rw) {
+          rw = new EstateWorld(fromId, pkt.state.name, '#dc2626', false);
+          this.rivals.push(rw);
+        }
+        rw.applySnapshot(pkt.state);
+      } else if (this.rivals[0]) {
+        this.rivals[0].applySnapshot(pkt.state);
+      }
+    } else if (pkt.type === 'SABOTAGE') {
+      this.myWorld.receiveSabotage(pkt.sabKey);
+      this.toast(`⚠️ ${pkt.fromName} ti ha mandato un sabotaggio!`);
+      if (this.mode === 'LAN_HOST') this.net.broadcast(pkt);
+    } else if (pkt.type === 'WIN') {
+      this.endMatch(pkt.winner);
+    } else if (pkt.type === 'REMATCH') {
+      this.resetMatch();
+    }
+  },
+
+  dispatchSabotage(sabKey, fromName) {
+    if (this.mode === 'BOT') {
+      if (fromName === this.myWorld.name) {
+        this.rivals[0].receiveSabotage(sabKey);
+        this.toast(`💀 Hai sabotato la tenuta di ${this.rivals[0].name}!`);
+      } else {
+        this.myWorld.receiveSabotage(sabKey);
+        this.toast(`⚠️ ${fromName} ti ha mandato un sabotaggio!`);
+      }
+    } else if (this.mode === 'LAN_HOST') {
+      this.net.broadcast({ type: 'SABOTAGE', sabKey, fromName });
+      this.toast(`💀 Sabotaggio inviato ai rivali in LAN!`);
+    } else if (this.mode === 'LAN_CLIENT') {
+      this.net.sendToHost({ type: 'SABOTAGE', sabKey, fromName });
+      this.toast(`💀 Sabotaggio inviato!`);
+    }
+  },
+
+  startLoop() {
+    this.running = true;
+    this.shopOpen = false;
+    document.getElementById('shop-modal').classList.remove('open');
+    this.showScreen('screen-game');
+    this.lastTime = performance.now();
+    requestAnimationFrame((t) => this.loop(t));
+  },
+
+  readMovementKeys() {
+    if (!this.myWorld) return;
+    if (this.shopOpen) {
+      this.myWorld.hero.vx = 0;
+      this.myWorld.hero.vy = 0;
+      return;
+    }
+    let vx = 0, vy = 0;
+    if (this.keys['KeyW'] || this.keys['ArrowUp']) vy -= 1;
+    if (this.keys['KeyS'] || this.keys['ArrowDown']) vy += 1;
+    if (this.keys['KeyA'] || this.keys['ArrowLeft']) vx -= 1;
+    if (this.keys['KeyD'] || this.keys['ArrowRight']) vx += 1;
+    if (vx !== 0 && vy !== 0) { vx *= 0.7071; vy *= 0.7071; }
+    this.myWorld.hero.vx = vx;
+    this.myWorld.hero.vy = vy;
+  },
+
+  loop(now) {
+    if (!this.running) return;
+    const dt = Math.min(0.1, (now - this.lastTime) / 1000);
+    this.lastTime = now;
+
+    this.readMovementKeys();
+    const prevGold = this.myWorld.gold;
+    this.myWorld.update(dt, (sabKey, fromName) => this.dispatchSabotage(sabKey, fromName));
+
+    // Se il negozio è aperto e l'oro cambia grazie ai lavoratori, aggiorna i pulsanti in tempo reale
+    if (this.shopOpen && this.myWorld.gold !== prevGold) {
+      this.renderShopItems();
+    }
+
+    if (this.mode === 'BOT' && this.rivals[0]) {
+      this.botAI.update(dt);
+      this.rivals[0].update(dt, (sabKey, fromName) => this.dispatchSabotage(sabKey, fromName));
+    }
+
+    if (this.mode === 'LAN_HOST' || this.mode === 'LAN_CLIENT') {
+      this.syncAccum += dt;
+      if (this.syncAccum >= 0.07) {
+        this.syncAccum = 0;
+        const pkt = { type: 'SYNC', state: this.myWorld.serialize() };
+        if (this.mode === 'LAN_HOST') this.net.broadcast(pkt);
+        else this.net.sendToHost(pkt);
+      }
+    }
+
+    this.updateHUD();
+    this.drawCanvas();
+    this.checkWin();
+
+    requestAnimationFrame((t) => this.loop(t));
+  },
+
+  updateHUD() {
+    const w = this.myWorld;
+    document.getElementById('ui-my-name').innerText = w.name;
+    document.getElementById('ui-my-gold').innerText = w.gold;
+    document.getElementById('ui-my-bag').innerText = `${w.hero.bag}/${w.hero.maxBag}`;
+    document.getElementById('ui-my-team').innerText = w.workers.length;
+    document.getElementById('ui-my-reb').innerText = w.rebirths;
+    document.getElementById('ui-my-mult').innerText = w.multiplier;
+    document.getElementById('ui-bar-p1').style.width = `${w.getProgress() * 50}%`;
+
+    if (this.rivals.length > 0) {
+      const lead = [...this.rivals].sort((a, b) => b.getProgress() - a.getProgress())[0];
+      document.getElementById('ui-riv-name').innerText = lead.name;
+      document.getElementById('ui-riv-gold').innerText = lead.gold;
+      document.getElementById('ui-riv-reb').innerText = lead.rebirths;
+      document.getElementById('ui-bar-p2').style.width = `${lead.getProgress() * 50}%`;
+    }
+  },
+
+  drawCanvas() {
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (this.mode === 'BOT') {
+      const half = Math.floor(canvas.width / 2);
+      EstateRenderer.renderViewport(ctx, this.myWorld, 0, 0, half, canvas.height, `🛡️ LA TUA TENUTA (Premi E per Emporio)`);
+      EstateRenderer.renderViewport(ctx, this.rivals[0], half, 0, half, canvas.height, `⚔️ TENUTA DEL BOT (LIVE)`);
+
+      // Cornice divisoria centrale in legno e oro
+      ctx.fillStyle = '#2c1a0e';
+      ctx.fillRect(half - 4, 0, 8, canvas.height);
+      ctx.fillStyle = '#e09f24';
+      ctx.fillRect(half - 1, 0, 2, canvas.height);
+    } else {
+      EstateRenderer.renderViewport(ctx, this.myWorld, 0, 0, canvas.width, canvas.height, `🛡️ LA TUA TENUTA (${this.myWorld.name})`);
+    }
+  },
+
+  checkWin() {
+    if (this.myWorld.hasWon()) {
+      if (this.mode === 'LAN_HOST') this.net.broadcast({ type: 'WIN', winner: this.myWorld.name });
+      else if (this.mode === 'LAN_CLIENT') this.net.sendToHost({ type: 'WIN', winner: this.myWorld.name });
+      this.endMatch(this.myWorld.name);
+      return;
+    }
+    for (const r of this.rivals) {
+      if (r.hasWon()) {
+        this.endMatch(r.name);
+        return;
+      }
+    }
+  },
+
+  endMatch(winnerName) {
+    this.running = false;
+    this.toggleShop(false);
+    document.getElementById('over-winner-title').innerText = `👑 ${winnerName} Trionfa!`;
+    const r = this.rivals[0] || { gold: 0, rebirths: 0 };
+    document.getElementById('over-summary-box').innerHTML = `
+      <div><b>Il Tuo Oro:</b> ${this.myWorld.gold} 🪙 | <b>Rinascite:</b> ${this.myWorld.rebirths} 🔥 | <b>Persone Assunte:</b> ${this.myWorld.workers.length} 👥</div>
+      <div><b>Sabotaggi Scagliati:</b> ${this.myWorld.sabotagesLaunched} 💀</div>
+      <hr style="margin:10px 0; border-color:#cbb696;">
+      <div><b>Oro Rivale:</b> ${r.gold} 🪙 | <b>Rinascite Rivale:</b> ${r.rebirths} 🔥</div>
+    `;
+    this.showScreen('screen-gameover');
+  },
+
+  resetMatch() {
+    this.myWorld.reset();
+    this.rivals.forEach(r => r.reset());
+    if (this.botAI && this.rivals[0]) {
+      this.botAI = new RivalBotAI(this.rivals[0], (sabKey, fromName) => this.dispatchSabotage(sabKey, fromName));
+    }
+    this.startLoop();
+  },
+
+  triggerRematch() {
+    if (this.mode === 'LAN_HOST') this.net.broadcast({ type: 'REMATCH' });
+    else if (this.mode === 'LAN_CLIENT') this.net.sendToHost({ type: 'REMATCH' });
+    this.resetMatch();
+  },
+
+  returnToMain() {
+    this.running = false;
+    if (this.net) this.net.close();
+    this.showScreen('screen-menu');
+  }
+};
+
+window.addEventListener('DOMContentLoaded', () => Game.init());
+</script>
+</body>
+</html>

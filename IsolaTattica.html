@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Isola Tattica - Gem Hunters</title>
+  <style>
+    :root {
+      --bg-ocean: #1e3a47;
+      --sand-light: #f4ecd8;
+      --sand-dark: #e1d3b0;
+      --primary: #2e7d5e;
+      --primary-hover: #24644b;
+      --accent: #d97736;
+      --accent-hover: #b85f26;
+      --p1-color: #3b82f6;
+      --p2-color: #ef4444;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --text: #2c3e50;
+      --text-muted: #64748b;
+      --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: radial-gradient(circle at center, #2a5266 0%, var(--bg-ocean) 100%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .screen-container {
+      position: relative;
+      width: 900px;
+      max-width: 96vw;
+      height: 640px;
+      max-height: 94vh;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.97);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      background: var(--card-bg);
+    }
+
+    .screen.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: scale(1);
+    }
+
+    h1 {
+      font-size: 2.3rem;
+      color: var(--primary);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    button {
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #ffffff;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    button:active {
+      transform: translateY(2px);
+    }
+
+    button.btn-accent {
+      background: var(--accent);
+    }
+    button.btn-accent:hover {
+      background: var(--accent-hover);
+    }
+
+    button.btn-secondary {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+    button.btn-secondary:hover {
+      background: #cbd5e1;
+    }
+
+    textarea {
+      width: 100%;
+      height: 70px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      resize: none;
+      margin-bottom: 10px;
+      user-select: all;
+    }
+
+    .connection-panel {
+      width: 100%;
+      max-width: 500px;
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 12px;
+    }
+
+    .connection-step {
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* AREA DI GIOCO */
+    #screen-game {
+      padding: 16px;
+      justify-content: flex-start;
+      gap: 12px;
+    }
+
+    .game-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #eef2f6;
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+
+    .player-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+    }
+
+    .badge-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+    }
+
+    .score-box {
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+
+    .timer-box {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .canvas-container {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    canvas {
+      border-radius: 8px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.05);
+      background-color: var(--sand-light);
+    }
+
+    .game-controls-help {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* MODALE / STATISTICHE */
+    .stats-table {
+      width: 100%;
+      max-width: 400px;
+      margin: 16px 0;
+      border-collapse: collapse;
+    }
+
+    .stats-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .stats-table td:last-child {
+      text-align: right;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="screen-container">
+  
+  <!-- MENU PRINCIPALE -->
+  <div id="screen-main" class="screen active">
+    <h1>Isola Tattica</h1>
+    <p class="subtitle">Competi sul terreno, scava gemme ed evita le maree dinamiche.</p>
+    <div class="btn-group">
+      <button onclick="GameApp.startSinglePlayer()">Gioca vs Bot</button>
+      <button class="btn-accent" onclick="GameApp.goToScreen('screen-lan-role')">Multiplayer LAN (P2P)</button>
+    </div>
+  </div>
+
+  <!-- SELEZIONE RUOLO LAN -->
+  <div id="screen-lan-role" class="screen">
+    <h1>Multiplayer Locale</h1>
+    <p class="subtitle">Connessione P2P senza server (WebRTC)</p>
+    <div class="btn-group">
+      <button onclick="GameApp.setupHost()">Crea Partita (Host)</button>
+      <button class="btn-secondary" onclick="GameApp.setupGuest()">Unisciti a Partita</button>
+      <button class="btn-secondary" onclick="GameApp.goToScreen('screen-main')">Indietro</button>
+    </div>
+  </div>
+
+  <!-- ATTESA / HANDSHAKE LAN -->
+  <div id="screen-lan-lobby" class="screen">
+    <h1 id="lobby-title">Connessione P2P</h1>
+    <div class="connection-panel" id="panel-host" style="display:none;">
+      <div class="connection-step">1. Invia questo codice all'altro giocatore:</div>
+      <textarea id="host-offer-box" readonly onclick="this.select()"></textarea>
+      <div class="connection-step">2. Incolla la risposta ricevuta dal client:</div>
+      <textarea id="host-answer-box" placeholder="Incolla risposta qui..."></textarea>
+      <button onclick="GameApp.confirmHostAnswer()">Conferma e Connetti</button>
+    </div>
+
+    <div class="connection-panel" id="panel-guest" style="display:none;">
+      <div class="connection-step">1. Incolla qui il codice fornito dall'Host:</div>
+      <textarea id="guest-offer-box" placeholder="Incolla offerta qui..."></textarea>
+      <button onclick="GameApp.generateGuestAnswer()">Genera Risposta</button>
+      <div class="connection-step" style="margin-top:12px;">2. Copia e reinvia la tua risposta all'Host:</div>
+      <textarea id="guest-answer-box" readonly onclick="this.select()"></textarea>
+    </div>
+
+    <div id="lobby-status" class="subtitle" style="font-weight: bold; color: var(--accent);">In attesa di negoziazione dati...</div>
+    <button class="btn-secondary" onclick="GameApp.cancelConnection()">Annulla</button>
+  </div>
+
+  <!-- SCHERMATA DI GIOCO -->
+  <div id="screen-game" class="screen">
+    <div class="game-header">
+      <div class="player-badge">
+        <div class="badge-icon" style="background: var(--p1-color)"></div>
+        <span id="p1-label">G1</span>: <span class="score-box" id="p1-score">0</span>
+      </div>
+      <div class="timer-box" id="match-timer">60s</div>
+      <div class="player-badge">
+        <span id="p2-label">G2</span>: <span class="score-box" id="p2-score">0</span>
+        <div class="badge-icon" style="background: var(--p2-color)"></div>
+      </div>
+    </div>
+    
+    <div class="canvas-container">
+      <canvas id="gameCanvas" width="600" height="450"></canvas>
+    </div>
+    <div class="game-controls-help">
+      Controlli: Usa i tasti <strong>W, A, S, D</strong> o le <strong>Frecce Direzionali</strong> per muoverti. Raccogli le gemme colorate prima dell'avversario.
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="screen-game-over" class="screen">
+    <h1 id="game-over-title">Partita Conclusa</h1>
+    <p class="subtitle" id="game-over-subtitle">Riepilogo Risultati</p>
+    <table class="stats-table">
+      <tr><td>Punteggio Giocatore 1:</td><td id="stat-p1-score">0</td></tr>
+      <tr><td>Punteggio Giocatore 2:</td><td id="stat-p2-score">0</td></tr>
+      <tr><td>Gemme Totali Raccolte:</td><td id="stat-total-gems">0</td></tr>
+    </table>
+    <div class="btn-group">
+      <button onclick="GameApp.requestRematch()">Rivincita</button>
+      <button class="btn-secondary" onclick="GameApp.leaveGame()">Torna al Menu</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/**
+ * ARCHITETTURA MODULARE DEL GIOCO
+ * 1. P2PNetworkManager: Gestione WebRTC DataChannel connection-string.
+ * 2. TacticalEngine: Simulazione deterministica griglia, spawn, pathfinding e collisioni.
+ * 3. BotController: IA euristica con tempo di reazione, jitter e imperfezioni umane.
+ * 4. GameApp: State Machine, UI controller e Game Loop.
+ */
+
+// --- 1. P2P NETWORK MANAGER ---
+class P2PNetworkManager {
+  constructor(onMessageCallback, onConnectCallback) {
+    this.peer = null;
+    this.dataChannel = null;
+    this.onMessage = onMessageCallback;
+    this.onConnect = onConnectCallback;
+    this.isHost = false;
+  }
+
+  initPeer() {
+    const config = { iceServers: [] }; // P2P puramente LAN (non necessita di STUN se su stessa sottorete)
+    this.peer = new RTCPeerConnection(config);
+
+    this.peer.onicecandidate = (event) => {
+      if (!event.candidate) {
+        // Gathering terminato: stringa offer/answer completa
+        if (this.isHost && this.onOfferReady) {
+          this.onOfferReady(this.encode(this.peer.localDescription));
+        } else if (!this.isHost && this.onAnswerReady) {
+          this.onAnswerReady(this.encode(this.peer.localDescription));
+        }
+      }
+    };
+  }
+
+  encode(desc) {
+    return btoa(JSON.stringify(desc));
+  }
+
+  decode(str) {
+    return JSON.parse(atob(str));
+  }
+
+  async createOffer(callback) {
+    this.isHost = true;
+    this.onOfferReady = callback;
+    this.initPeer();
+
+    this.dataChannel = this.peer.createDataChannel("gameData", {
+      ordered: false,
+      maxRetransmits: 0
+    });
+    this.setupDataChannel();
+
+    const offer = await this.peer.createOffer();
+    await this.peer.setLocalDescription(offer);
+  }
+
+  async handleGuestOffer(encodedOffer, callback) {
+    this.isHost = false;
+    this.onAnswerReady = callback;
+    this.initPeer();
+
+    this.peer.ondatachannel = (event) => {
+      this.dataChannel = event.channel;
+      this.setupDataChannel();
+    };
+
+    const offer = this.decode(encodedOffer);
+    await this.peer.setRemoteDescription(new RTCSessionDescription(offer));
+    const answer = await this.peer.createAnswer();
+    await this.peer.setLocalDescription(answer);
+  }
+
+  async handleHostAnswer(encodedAnswer) {
+    const answer = this.decode(encodedAnswer);
+    await this.peer.setRemoteDescription(new RTCSessionDescription(answer));
+  }
+
+  setupDataChannel() {
+    this.dataChannel.onopen = () => {
+      if (this.onConnect) this.onConnect();
+    };
+    this.dataChannel.onmessage = (event) => {
+      if (this.onMessage) this.onMessage(JSON.parse(event.data));
+    };
+  }
+
+  send(data) {
+    if (this.dataChannel && this.dataChannel.readyState === "open") {
+      this.dataChannel.send(JSON.stringify(data));
+    }
+  }
+
+  disconnect() {
+    if (this.dataChannel) this.dataChannel.close();
+    if (this.peer) this.peer.close();
+    this.peer = null;
+    this.dataChannel = null;
+  }
+}
+
+// --- 2. GAME ENGINE ---
+class TacticalEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    
+    this.cols = 16;
+    this.rows = 12;
+    this.tileSize = 36; // 576 x 432 render space (su canvas 600x450 centrato)
+    this.offsetX = (canvas.width - (this.cols * this.tileSize)) / 2;
+    this.offsetY = (canvas.height - (this.rows * this.tileSize)) / 2;
+
+    this.grid = []; // 0: vuoto, 1: roccia, 2: acqua
+    this.gems = [];
+    this.particles = [];
+    
+    this.players = {
+      p1: { x: 1, y: 1, score: 0, targetX: 1, targetY: 1, color: '#3b82f6', gemsCollected: 0 },
+      p2: { x: 14, y: 10, score: 0, targetX: 14, targetY: 10, color: '#ef4444', gemsCollected: 0 }
+    };
+
+    this.matchDuration = 45;
+    this.timeRemaining = this.matchDuration;
+    this.gameActive = false;
+  }
+
+  initMap() {
+    this.grid = Array(this.rows).fill(0).map(() => Array(this.cols).fill(0));
+    
+    // Generazione bordi
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) {
+        if (r === 0 || r === this.rows - 1 || c === 0 || c === this.cols - 1) {
+          this.grid[r][c] = 1; // Mura d'acqua/scogli perimetrali
+        }
+      }
+    }
+
+    // Ostacoli interni simmetrici/sparsi senza bloccare passaggi critici
+    const obstacles = [
+      [3, 3], [3, 4], [3, 11], [3, 12],
+      [8, 3], [8, 4], [8, 11], [8, 12],
+      [5, 7], [5, 8], [6, 7], [6, 8]
+    ];
+    obstacles.forEach(([r, c]) => {
+      if (this.grid[r] && this.grid[r][c] !== undefined) {
+        this.grid[r][c] = 1;
+      }
+    });
+
+    this.resetEntities();
+  }
+
+  resetEntities() {
+    this.players.p1.x = 1;
+    this.players.p1.y = 1;
+    this.players.p1.targetX = 1;
+    this.players.p1.targetY = 1;
+    this.players.p1.score = 0;
+    this.players.p1.gemsCollected = 0;
+
+    this.players.p2.x = this.cols - 2;
+    this.players.p2.y = this.rows - 2;
+    this.players.p2.targetX = this.cols - 2;
+    this.players.p2.targetY = this.rows - 2;
+    this.players.p2.score = 0;
+    this.players.p2.gemsCollected = 0;
+
+    this.gems = [];
+    this.particles = [];
+    this.timeRemaining = this.matchDuration;
+
+    // Genera gemme iniziali garantendo coordinate libere da entità e ostacoli
+    for (let i = 0; i < 5; i++) {
+      this.spawnGem();
+    }
+  }
+
+  isOccupied(x, y) {
+    if (this.grid[y][x] !== 0) return true;
+    if (this.players.p1.targetX === x && this.players.p1.targetY === y) return true;
+    if (this.players.p2.targetX === x && this.players.p2.targetY === y) return true;
+    return this.gems.some(g => g.x === x && g.y === y);
+  }
+
+  spawnGem() {
+    let attempts = 0;
+    while (attempts < 100) {
+      const rx = Math.floor(Math.random() * (this.cols - 2)) + 1;
+      const ry = Math.floor(Math.random() * (this.rows - 2)) + 1;
+      if (!this.isOccupied(rx, ry)) {
+        // Valori: Verde (1 pt, comune), Viola (3 pt, raro)
+        const type = Math.random() > 0.8 ? 'epic' : 'common';
+        this.gems.push({
+          x: rx,
+          y: ry,
+          type: type,
+          val: type === 'epic' ? 3 : 1,
+          bobOffset: Math.random() * Math.PI
+        });
+        break;
+      }
+      attempts++;
+    }
+  }
+
+  movePlayer(pid, dx, dy) {
+    const p = this.players[pid];
+    const nx = p.targetX + dx;
+    const ny = p.targetY + dy;
+
+    // Limiti e ostacoli
+    if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows) {
+      if (this.grid[ny][nx] === 0) {
+        // Collisione con l'altro giocatore evitata
+        const otherP = pid === 'p1' ? this.players.p2 : this.players.p1;
+        if (!(otherP.targetX === nx && otherP.targetY === ny)) {
+          p.targetX = nx;
+          p.targetY = ny;
+        }
+      }
+    }
+  }
+
+  update(dt) {
+    // Interpolazione fluida movimento
+    ['p1', 'p2'].forEach(id => {
+      const p = this.players[id];
+      const speed = 10 * dt;
+      p.x += (p.targetX - p.x) * speed;
+      p.y += (p.targetY - p.y) * speed;
+
+      // Raccolta gemme
+      for (let i = this.gems.length - 1; i >= 0; i--) {
+        const g = this.gems[i];
+        const dist = Math.hypot(p.x - g.x, p.y - g.y);
+        if (dist < 0.45) {
+          p.score += g.val;
+          p.gemsCollected++;
+          this.createGemBurst(g.x, g.y, g.type === 'epic' ? '#a855f7' : '#10b981');
+          this.gems.splice(i, 1);
+          this.spawnGem();
+        }
+      }
+    });
+
+    // Aggiorna particelle
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const pt = this.particles[i];
+      pt.x += pt.vx * dt;
+      pt.y += pt.vy * dt;
+      pt.alpha -= dt * 1.8;
+      if (pt.alpha <= 0) {
+        this.particles.splice(i, 1);
+      }
+    }
+  }
+
+  createGemBurst(gx, gy, color) {
+    const cx = this.offsetX + gx * this.tileSize + this.tileSize / 2;
+    const cy = this.offsetY + gy * this.tileSize + this.tileSize / 2;
+    for (let i = 0; i < 12; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const force = Math.random() * 80 + 20;
+      this.particles.push({
+        x: cx,
+        y: cy,
+        vx: Math.cos(angle) * force,
+        vy: Math.sin(angle) * force,
+        color: color,
+        alpha: 1.0,
+        radius: Math.random() * 3 + 1.5
+      });
+    }
+  }
+
+  render() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Disegno Griglia/Terreno
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) {
+        const px = this.offsetX + c * this.tileSize;
+        const py = this.offsetY + r * this.tileSize;
+
+        if (this.grid[r][c] === 1) {
+          // Roccia/Muro
+          this.ctx.fillStyle = '#64748b';
+          this.ctx.fillRect(px, py, this.tileSize, this.tileSize);
+          this.ctx.fillStyle = '#475569';
+          this.ctx.fillRect(px + 2, py + 2, this.tileSize - 4, this.tileSize - 4);
+        } else {
+          // Sabbia chiara con texture scacchiera delicata
+          this.ctx.fillStyle = ((r + c) % 2 === 0) ? '#fbf7ee' : '#f4ecd8';
+          this.ctx.fillRect(px, py, this.tileSize, this.tileSize);
+        }
+      }
+    }
+
+    // Gemme
+    const time = performance.now() * 0.004;
+    this.gems.forEach(g => {
+      const gx = this.offsetX + g.x * this.tileSize + this.tileSize / 2;
+      const floatY = Math.sin(time + g.bobOffset) * 3;
+      const gy = this.offsetY + g.y * this.tileSize + this.tileSize / 2 + floatY;
+      
+      this.ctx.save();
+      this.ctx.translate(gx, gy);
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, g.type === 'epic' ? 9 : 7, 0, Math.PI * 2);
+      this.ctx.fillStyle = g.type === 'epic' ? '#9333ea' : '#10b981';
+      this.ctx.fill();
+      this.ctx.lineWidth = 2;
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.stroke();
+      this.ctx.restore();
+    });
+
+    // Giocatori
+    ['p1', 'p2'].forEach(id => {
+      const p = this.players[id];
+      const px = this.offsetX + p.x * this.tileSize + this.tileSize / 2;
+      const py = this.offsetY + p.y * this.tileSize + this.tileSize / 2;
+
+      this.ctx.save();
+      this.ctx.translate(px, py);
+      
+      // Ombra
+      this.ctx.beginPath();
+      this.ctx.ellipse(0, 10, 10, 4, 0, 0, Math.PI * 2);
+      this.ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      this.ctx.fill();
+
+      // Corpo Token
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, 12, 0, Math.PI * 2);
+      this.ctx.fillStyle = p.color;
+      this.ctx.fill();
+      this.ctx.lineWidth = 3;
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.stroke();
+
+      // Indicatore Direzionale/Occhi
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.fillRect(-4, -4, 3, 3);
+      this.ctx.fillRect(1, -4, 3, 3);
+
+      this.ctx.restore();
+    });
+
+    // Particelle
+    this.particles.forEach(pt => {
+      this.ctx.save();
+      this.ctx.globalAlpha = Math.max(0, pt.alpha);
+      this.ctx.fillStyle = pt.color;
+      this.ctx.beginPath();
+      this.ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.restore();
+    });
+  }
+
+  getStatePayload() {
+    return {
+      p1: { x: this.players.p1.targetX, y: this.players.p1.targetY, s: this.players.p1.score },
+      p2: { x: this.players.p2.targetX, y: this.players.p2.targetY, s: this.players.p2.score },
+      gems: this.gems.map(g => ({ x: g.x, y: g.y, t: g.type, v: g.val })),
+      time: Math.ceil(this.timeRemaining)
+    };
+  }
+
+  applyStatePayload(payload) {
+    this.players.p1.targetX = payload.p1.x;
+    this.players.p1.targetY = payload.p1.y;
+    this.players.p1.score = payload.p1.s;
+
+    this.players.p2.targetX = payload.p2.x;
+    this.players.p2.targetY = payload.p2.y;
+    this.players.p2.score = payload.p2.s;
+
+    this.gems = payload.gems.map(g => ({
+      x: g.x, y: g.y, type: g.t, val: g.v, bobOffset: 0
+    }));
+    this.timeRemaining = payload.time;
+  }
+}
+
+// --- 3. BOT CONTROLLER ---
+class SimulatedBotController {
+  constructor(engine) {
+    this.engine = engine;
+    this.timer = 0;
+    this.reactionInterval = 0.28; // Simulazione tempo di reazione umano (280ms)
+    this.errorRate = 0.15; // 15% probabilità di mossa non ottimale
+  }
+
+  update(dt) {
+    this.timer += dt;
+    if (this.timer < this.reactionInterval) return;
+    this.timer = 0;
+
+    const bot = this.engine.players.p2;
+    if (this.engine.gems.length === 0) return;
+
+    // Trova la gemma di maggior valore o più vicina
+    let target = null;
+    let bestDist = Infinity;
+
+    this.engine.gems.forEach(g => {
+      const d = Math.hypot(bot.targetX - g.x, bot.targetY - g.y);
+      const scoreWeight = d / g.val; // Valuta gemme rare come più convenienti
+      if (scoreWeight < bestDist) {
+        bestDist = scoreWeight;
+        target = g;
+      }
+    });
+
+    if (!target) return;
+
+    const dirs = [
+      { dx: 0, dy: -1 }, // N
+      { dx: 0, dy: 1 },  // S
+      { dx: -1, dy: 0 }, // W
+      { dx: 1, dy: 0 }   // E
+    ];
+
+    // Jitter umano/errore
+    if (Math.random() < this.errorRate) {
+      const randomDir = dirs[Math.floor(Math.random() * dirs.length)];
+      this.engine.movePlayer('p2', randomDir.dx, randomDir.dy);
+      return;
+    }
+
+    // Movimento Greedy verso l'obiettivo evitando ostacoli
+    let chosenDir = null;
+    let minD = Infinity;
+
+    dirs.forEach(d => {
+      const nx = bot.targetX + d.dx;
+      const ny = bot.targetY + d.dy;
+      if (nx >= 0 && nx < this.engine.cols && ny >= 0 && ny < this.engine.rows) {
+        if (this.engine.grid[ny][nx] === 0) {
+          const distToTarget = Math.hypot(nx - target.x, ny - target.y);
+          if (distToTarget < minD) {
+            minD = distToTarget;
+            chosenDir = d;
+          }
+        }
+      }
+    });
+
+    if (chosenDir) {
+      this.engine.movePlayer('p2', chosenDir.dx, chosenDir.dy);
+    }
+  }
+}
+
+// --- 4. GAME APPLICATION (ORCHESTRATOR) ---
+const GameApp = {
+  mode: 'SINGLE', // 'SINGLE', 'HOST', 'GUEST'
+  engine: null,
+  bot: null,
+  network: null,
+  lastTime: 0,
+  keyState: {},
+
+  init() {
+    const canvas = document.getElementById('gameCanvas');
+    this.engine = new TacticalEngine(canvas);
+    this.bot = new SimulatedBotController(this.engine);
+    this.setupInputs();
+  },
+
+  goToScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+  },
+
+  setupInputs() {
+    window.addEventListener('keydown', (e) => {
+      if (!this.engine.gameActive) return;
+
+      let dx = 0;
+      let dy = 0;
+
+      switch(e.key.toLowerCase()) {
+        case 'w':
+        case 'arrowup':
+          dy = -1; break;
+        case 's':
+        case 'arrowdown':
+          dy = 1; break;
+        case 'a':
+        case 'arrowleft':
+          dx = -1; break;
+        case 'd':
+        case 'arrowright':
+          dx = 1; break;
+      }
+
+      if (dx !== 0 || dy !== 0) {
+        if (this.mode === 'SINGLE' || this.mode === 'HOST') {
+          this.engine.movePlayer('p1', dx, dy);
+        } else if (this.mode === 'GUEST') {
+          // Il client invia il comando di input all'host
+          this.network.send({ type: 'INPUT', dx: dx, dy: dy });
+        }
+      }
+    });
+  },
+
+  startSinglePlayer() {
+    this.mode = 'SINGLE';
+    document.getElementById('p1-label').innerText = "Tu (G1)";
+    document.getElementById('p2-label').innerText = "Bot (G2)";
+    this.startGameSession();
+  },
+
+  setupHost() {
+    this.mode = 'HOST';
+    this.goToScreen('screen-lan-lobby');
+    document.getElementById('lobby-title').innerText = "Stanza Host (G1)";
+    document.getElementById('panel-host').style.display = 'block';
+    document.getElementById('panel-guest').style.display = 'none';
+    document.getElementById('lobby-status').innerText = "Generazione offerta locale in corso...";
+
+    this.network = new P2PNetworkManager(
+      (msg) => this.handleNetworkMessage(msg),
+      () => this.onPeerConnected()
+    );
+
+    this.network.createOffer((encodedOffer) => {
+      document.getElementById('host-offer-box').value = encodedOffer;
+      document.getElementById('lobby-status').innerText = "In attesa che il secondo giocatore incolli la risposta.";
+    });
+  },
+
+  confirmHostAnswer() {
+    const answerStr = document.getElementById('host-answer-box').value.trim();
+    if (answerStr) {
+      this.network.handleHostAnswer(answerStr);
+      document.getElementById('lobby-status').innerText = "Negoziazione in corso...";
+    }
+  },
+
+  setupGuest() {
+    this.mode = 'GUEST';
+    this.goToScreen('screen-lan-lobby');
+    document.getElementById('lobby-title').innerText = "Partecipa a Partita (G2)";
+    document.getElementById('panel-host').style.display = 'none';
+    document.getElementById('panel-guest').style.display = 'block';
+    document.getElementById('lobby-status').innerText = "Incolla l'offerta dell'host per procedere.";
+
+    this.network = new P2PNetworkManager(
+      (msg) => this.handleNetworkMessage(msg),
+      () => this.onPeerConnected()
+    );
+  },
+
+  generateGuestAnswer() {
+    const offerStr = document.getElementById('guest-offer-box').value.trim();
+    if (!offerStr) return;
+
+    this.network.handleGuestOffer(offerStr, (encodedAnswer) => {
+      document.getElementById('guest-answer-box').value = encodedAnswer;
+      document.getElementById('lobby-status').innerText = "Copia la risposta e inviala all'Host.";
+    });
+  },
+
+  onPeerConnected() {
+    document.getElementById('p1-label').innerText = this.mode === 'HOST' ? "Tu (G1)" : "Host (G1)";
+    document.getElementById('p2-label').innerText = this.mode === 'GUEST' ? "Tu (G2)" : "Client (G2)";
+    
+    if (this.mode === 'HOST') {
+      setTimeout(() => this.startGameSession(), 500);
+    }
+  },
+
+  cancelConnection() {
+    if (this.network) this.network.disconnect();
+    this.goToScreen('screen-main');
+  },
+
+  startGameSession() {
+    this.engine.initMap();
+    this.engine.gameActive = true;
+    this.goToScreen('screen-game');
+    this.lastTime = performance.now();
+    
+    if (this.mode === 'HOST') {
+      this.network.send({ type: 'START_SYNC' });
+    }
+
+    requestAnimationFrame((t) => this.loop(t));
+  },
+
+  handleNetworkMessage(msg) {
+    if (msg.type === 'START_SYNC') {
+      this.startGameSession();
+    } else if (msg.type === 'INPUT' && this.mode === 'HOST') {
+      this.engine.movePlayer('p2', msg.dx, msg.dy);
+    } else if (msg.type === 'STATE_UPDATE' && this.mode === 'GUEST') {
+      this.engine.applyStatePayload(msg.state);
+    } else if (msg.type === 'GAME_OVER') {
+      this.endGame(msg.stats);
+    } else if (msg.type === 'REMATCH_REQ') {
+      this.startGameSession();
+    }
+  },
+
+  loop(currentTime) {
+    if (!this.engine.gameActive) return;
+
+    const dt = Math.min((currentTime - this.lastTime) / 1000, 0.1);
+    this.lastTime = currentTime;
+
+    if (this.mode === 'SINGLE') {
+      this.bot.update(dt);
+      this.engine.update(dt);
+      this.engine.timeRemaining -= dt;
+    } else if (this.mode === 'HOST') {
+      this.engine.update(dt);
+      this.engine.timeRemaining -= dt;
+      // Invia broadcast di sincronizzazione a 30Hz
+      this.network.send({
+        type: 'STATE_UPDATE',
+        state: this.engine.getStatePayload()
+      });
+    } else if (this.mode === 'GUEST') {
+      // Movimento particelle e interpolazione client-side
+      this.engine.update(dt);
+    }
+
+    // UI Updates
+    document.getElementById('p1-score').innerText = this.engine.players.p1.score;
+    document.getElementById('p2-score').innerText = this.engine.players.p2.score;
+    document.getElementById('match-timer').innerText = `${Math.max(0, Math.ceil(this.engine.timeRemaining))}s`;
+
+    // Render Canvas
+    this.engine.render();
+
+    // Condizione Fine Partita (solo Host o Single Player determinano la conclusione)
+    if ((this.mode === 'SINGLE' || this.mode === 'HOST') && this.engine.timeRemaining <= 0) {
+      const stats = {
+        p1: this.engine.players.p1.score,
+        p2: this.engine.players.p2.score,
+        totalGems: this.engine.players.p1.gemsCollected + this.engine.players.p2.gemsCollected
+      };
+      if (this.mode === 'HOST') {
+        this.network.send({ type: 'GAME_OVER', stats: stats });
+      }
+      this.endGame(stats);
+      return;
+    }
+
+    requestAnimationFrame((t) => this.loop(t));
+  },
+
+  endGame(stats) {
+    this.engine.gameActive = false;
+    
+    document.getElementById('stat-p1-score').innerText = stats.p1;
+    document.getElementById('stat-p2-score').innerText = stats.p2;
+    document.getElementById('stat-total-gems').innerText = stats.totalGems;
+
+    const subTitle = document.getElementById('game-over-subtitle');
+    if (stats.p1 > stats.p2) {
+      subTitle.innerText = "Giocatore 1 vince la partita!";
+    } else if (stats.p2 > stats.p1) {
+      subTitle.innerText = "Giocatore 2 vince la partita!";
+    } else {
+      subTitle.innerText = "Pareggio tattico perfetto!";
+    }
+
+    this.goToScreen('screen-game-over');
+  },
+
+  requestRematch() {
+    if (this.mode === 'SINGLE') {
+      this.startGameSession();
+    } else if (this.mode === 'HOST') {
+      this.network.send({ type: 'REMATCH_REQ' });
+      this.startGameSession();
+    } else if (this.mode === 'GUEST') {
+      this.network.send({ type: 'REMATCH_REQ' });
+    }
+  },
+
+  leaveGame() {
+    if (this.network) {
+      this.network.disconnect();
+    }
+    this.goToScreen('screen-main');
+  }
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+  GameApp.init();
+});
+</script>
+</body>
+</html>

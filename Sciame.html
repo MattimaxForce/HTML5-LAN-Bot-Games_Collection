@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Sciame — Il Giardino delle Api</title>
+<style>
+/* =========================================================
+   PALETTE E BASE
+   ========================================================= */
+:root{
+  --cream:      #faf5ea;
+  --cream-2:    #f2e9d6;
+  --linen:      #e8dcc4;
+  --bark:       #3f3628;
+  --bark-soft:  #6f6049;
+  --bark-mute:  #9c8b70;
+  --terracotta: #c4633f;
+  --terracotta-d:#a94f2f;
+  --honey:      #e0a53c;
+  --sage:       #7d9b6a;
+  --line:       rgba(63,54,40,.16);
+  --shadow:     0 18px 40px -22px rgba(63,54,40,.65);
+  --serif:      Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+}
+
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; margin:0; }
+body{
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  color: var(--bark);
+  background:
+    radial-gradient(120% 90% at 50% -10%, #fdf9f0 0%, #f4ecda 42%, #e7dbc1 100%);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+/* trama puntinata leggerissima */
+body::before{
+  content:"";
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: radial-gradient(rgba(63,54,40,.05) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: .9;
+}
+/* alone caldo decorativo */
+body::after{
+  content:"";
+  position: fixed; z-index: 0; pointer-events: none;
+  width: 70vmax; height: 70vmax;
+  left: 50%; top: -35vmax; transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(224,165,60,.14) 0%, rgba(224,165,60,0) 62%);
+}
+
+/* =========================================================
+   LAYOUT SCHERMATE
+   ========================================================= */
+#app{ position: fixed; inset: 0; z-index: 1; overflow: hidden; }
+
+.screen{
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  opacity: 0; visibility: hidden;
+  transform: translateY(16px) scale(.985);
+  transition: opacity .38s cubic-bezier(.2,.7,.3,1),
+              transform .38s cubic-bezier(.2,.7,.3,1),
+              visibility .38s;
+}
+.screen.active{ opacity: 1; visibility: visible; transform: none; }
+
+#screen-game{ padding: 0; display: block; }
+
+/* =========================================================
+   TIPOGRAFIA
+   ========================================================= */
+h1{
+  font-family: var(--serif);
+  font-size: clamp(46px, 9vw, 76px);
+  letter-spacing: .16em;
+  margin: 0;
+  font-weight: 400;
+  color: var(--bark);
+  text-indent: .16em;
+}
+h2{
+  font-family: var(--serif);
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 400;
+  margin: 0 0 6px;
+  letter-spacing: .02em;
+}
+.subtitle{
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--bark-soft);
+  margin: 6px 0 0;
+  letter-spacing: .04em;
+}
+.tagline{
+  max-width: 430px;
+  margin: 22px auto 0;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--bark-soft);
+}
+
+/* =========================================================
+   MENU
+   ========================================================= */
+.menu-card{
+  position: relative;
+  text-align: center;
+  width: min(560px, 100%);
+  padding: 46px 34px 38px;
+  background: linear-gradient(180deg, rgba(255,253,247,.96), rgba(249,243,231,.92));
+  border: 1px solid rgba(63,54,40,.12);
+  border-radius: 28px;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.9);
+  backdrop-filter: blur(4px);
+}
+.logo-mark{
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 6px 10px rgba(196,99,63,.25));
+  animation: float 4.5s ease-in-out infinite;
+}
+@keyframes float{
+  0%,100%{ transform: translateY(0) rotate(-3deg); }
+  50%    { transform: translateY(-8px) rotate(3deg); }
+}
+
+.divider{
+  width: 64px; height: 1px; margin: 24px auto;
+  background: linear-gradient(90deg, transparent, rgba(63,54,40,.3), transparent);
+}
+
+.menu-actions{
+  display: flex; flex-direction: column; gap: 11px;
+  margin-top: 26px;
+}
+
+/* =========================================================
+   BOTTONI
+   ========================================================= */
+.btn{
+  font: inherit;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 14px 22px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(63,54,40,.16);
+  background: #fffdf7;
+  color: var(--bark);
+  cursor: pointer;
+  transition: transform .14s ease, box-shadow .2s ease,
+              background .2s ease, border-color .2s ease, opacity .2s;
+  box-shadow: 0 2px 0 rgba(63,54,40,.07), 0 10px 22px -14px rgba(63,54,40,.7);
+  letter-spacing: .01em;
+  -webkit-user-select: none; user-select: none;
+}
+.btn:hover:not(:disabled){ transform: translateY(-2px); box-shadow: 0 4px 0 rgba(63,54,40,.07), 0 16px 26px -16px rgba(63,54,40,.8); }
+.btn:active:not(:disabled){ transform: translateY(0) scale(.99); }
+.btn:disabled{ opacity: .42; cursor: not-allowed; }
+
+.btn-primary{
+  background: linear-gradient(180deg, #d2794f, #c4633f);
+  border-color: var(--terracotta-d);
+  color: #fff8ee;
+  box-shadow: 0 2px 0 rgba(120,50,25,.35), 0 14px 26px -16px rgba(169,79,47,.95);
+}
+.btn-primary:hover:not(:disabled){
+  background: linear-gradient(180deg, #da8158, #cb6b46);
+  box-shadow: 0 4px 0 rgba(120,50,25,.35), 0 18px 30px -16px rgba(169,79,47,1);
+}
+.btn-ghost{
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--bark-soft);
+  font-weight: 500;
+}
+.btn-ghost:hover:not(:disabled){ background: rgba(63,54,40,.06); box-shadow: none; transform: none; }
+
+.btn-small{
+  padding: 10px 16px;
+  font-size: 13.5px;
+  border-radius: 11px;
+}
+
+/* =========================================================
+   PANNELLI (lobby / game over)
+   ========================================================= */
+.panel{
+  width: min(640px, 100%);
+  padding: 32px 30px 28px;
+  background: linear-gradient(180deg, rgba(255,253,247,.97), rgba(249,243,231,.94));
+  border: 1px solid rgba(63,54,40,.12);
+  border-radius: 24px;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.9);
+}
+.panel h2{ text-align: center; }
+.panel .hint{
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--bark-soft);
+  margin: 16px 0 8px;
+}
+.panel .hint b{ color: var(--bark); }
+
+textarea{
+  width: 100%;
+  min-height: 78px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.45;
+  padding: 11px 13px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(63,54,40,.18);
+  background: #fffdf8;
+  color: var(--bark-soft);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  word-break: break-all;
+}
+textarea:focus{ border-color: var(--terracotta); box-shadow: 0 0 0 3px rgba(196,99,63,.14); }
+
+.lobby-block{ display: none; }
+.lobby-block.on{ display: block; }
+
+.lobby-players{
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 20px;
+  min-height: 34px;
+  justify-content: center;
+}
+.lobby-footer{
+  display: flex; flex-wrap: wrap; gap: 10px;
+  justify-content: center; align-items: center;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(63,54,40,.1);
+}
+.waiting{
+  font-size: 13px;
+  color: var(--bark-mute);
+  font-style: italic;
+}
+.waiting::after{
+  content: "";
+  animation: dots 1.4s steps(4, end) infinite;
+}
+@keyframes dots{
+  0%{ content:""; } 25%{ content:"."; } 50%{ content:".."; } 75%{ content:"..."; }
+}
+
+/* =========================================================
+   AREA DI GIOCO
+   ========================================================= */
+.game-layout{
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 12px 14px 10px;
+  gap: 8px;
+}
+.hud{
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center; align-items: center;
+  min-height: 46px;
+}
+.chip{
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px 7px 10px;
+  border-radius: 999px;
+  background: rgba(255,253,247,.85);
+  border: 1.5px solid rgba(63,54,40,.12);
+  box-shadow: 0 6px 16px -12px rgba(63,54,40,.8);
+  transition: transform .25s cubic-bezier(.2,.7,.3,1),
+              border-color .25s, box-shadow .25s, background .25s;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+.chip.active{
+  transform: translateY(-2px) scale(1.045);
+  border-color: var(--terracotta);
+  background: #fffdf8;
+  box-shadow: 0 0 0 3px rgba(196,99,63,.14), 0 12px 22px -14px rgba(63,54,40,.9);
+}
+.chip .dot{
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 1.5px solid rgba(63,54,40,.35);
+  flex: 0 0 auto;
+}
+.chip .pname{ font-weight: 600; color: var(--bark); }
+.chip .pscore{
+  font-family: var(--serif);
+  font-size: 16px;
+  min-width: 22px;
+  text-align: right;
+  color: var(--terracotta-d);
+  font-weight: 600;
+}
+.chip.bot .pname::after{ content: " ·bot"; font-weight: 400; color: var(--bark-mute); font-size: 11px; }
+
+.board-wrap{
+  position: relative;
+  min-height: 0;
+  border-radius: 20px;
+  overflow: hidden;
+}
+#board{ display: block; width: 100%; height: 100%; touch-action: manipulation; cursor: pointer; }
+
+.statusbar{
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--bark-soft);
+  min-height: 26px;
+  padding-bottom: 4px;
+  letter-spacing: .01em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.statusbar .sep{ color: rgba(63,54,40,.25); }
+.legend{
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--bark-mute);
+}
+.legend i{
+  width: 10px; height: 10px; border-radius: 3px;
+  display: inline-block; border: 1px solid rgba(63,54,40,.2);
+}
+
+/* =========================================================
+   RISULTATI
+   ========================================================= */
+.over-panel{ text-align: center; }
+#over-title{
+  font-family: var(--serif);
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 400;
+  margin: 0 0 4px;
+  letter-spacing: .02em;
+}
+#over-sub{
+  font-size: 14px; color: var(--bark-soft);
+  margin: 0 0 22px;
+}
+.stats{
+  display: flex; flex-direction: column; gap: 8px;
+  margin-bottom: 26px;
+}
+.stat-row{
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(255,253,247,.8);
+  border: 1.5px solid rgba(63,54,40,.1);
+  text-align: left;
+  transition: transform .3s cubic-bezier(.2,.7,.3,1), border-color .3s;
+  animation: rise .45s cubic-bezier(.2,.7,.3,1) backwards;
+}
+@keyframes rise{
+  from{ opacity: 0; transform: translateY(12px); }
+}
+.stat-row.win{
+  border-color: var(--honey);
+  background: linear-gradient(180deg, #fffbf0, #fdf4e0);
+  box-shadow: 0 0 0 3px rgba(224,165,60,.14);
+}
+.stat-row .who{ display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14.5px; }
+.stat-row .who .dot{
+  width: 15px; height: 15px; border-radius: 50%;
+  border: 1.5px solid rgba(63,54,40,.35);
+}
+.stat-row .col{ text-align: right; }
+.stat-row .col .lbl{
+  display: block; font-size: 10px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--bark-mute);
+}
+.stat-row .col .val{
+  font-family: var(--serif); font-size: 19px; color: var(--bark);
+}
+
+/* =========================================================
+   MODALE REGOLE
+   ========================================================= */
+.modal{
+  position: fixed; inset: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: center;
+  padding: 22px;
+  background: rgba(50,42,30,.42);
+  backdrop-filter: blur(5px);
+  opacity: 0; visibility: hidden;
+  transition: opacity .3s, visibility .3s;
+}
+.modal.on{ opacity: 1; visibility: visible; }
+.modal-card{
+  width: min(600px, 100%);
+  max-height: 84vh;
+  overflow-y: auto;
+  padding: 32px 30px 26px;
+  background: linear-gradient(180deg, #fffdf7, #f7f0e2);
+  border-radius: 24px;
+  border: 1px solid rgba(63,54,40,.14);
+  box-shadow: 0 40px 70px -30px rgba(30,24,16,.7);
+  transform: translateY(14px) scale(.97);
+  transition: transform .32s cubic-bezier(.2,.7,.3,1);
+}
+.modal.on .modal-card{ transform: none; }
+.modal-card h2{ text-align: center; margin-bottom: 18px; }
+.modal-card ul{
+  margin: 0 0 22px; padding: 0; list-style: none;
+  display: flex; flex-direction: column; gap: 13px;
+}
+.modal-card li{
+  position: relative;
+  padding-left: 30px;
+  font-size: 14px;
+  line-height: 1.62;
+  color: var(--bark-soft);
+}
+.modal-card li::before{
+  content: "";
+  position: absolute; left: 8px; top: .55em;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--honey);
+  box-shadow: 0 0 0 3px rgba(224,165,60,.2);
+}
+.modal-card li b{ color: var(--bark); }
+.modal-card .k{
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgba(63,54,40,.08);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--bark);
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+@media (max-width: 620px){
+  .screen{ padding: 14px; }
+  .menu-card{ padding: 34px 22px 28px; border-radius: 22px; }
+  .panel{ padding: 24px 20px 20px; border-radius: 20px; }
+  .btn{ padding: 13px 18px; font-size: 14.5px; }
+  .game-layout{ padding: 8px 8px 6px; gap: 6px; }
+  .chip{ font-size: 12px; padding: 6px 11px 6px 8px; }
+  .chip .pscore{ font-size: 14px; }
+  .logo-mark{ font-size: 36px; }
+}
+@media (max-height: 560px){
+  .menu-card{ padding-top: 22px; padding-bottom: 20px; }
+  .tagline{ display: none; }
+  .divider{ margin: 14px auto; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===================== MENU PRINCIPALE ===================== -->
+  <section class="screen active" id="screen-menu">
+    <div class="menu-card">
+      <div class="logo-mark">🐝</div>
+      <h1>SCIAME</h1>
+      <p class="subtitle">Il giardino delle api</p>
+      <div class="divider"></div>
+      <p class="tagline">
+        Muovi le tue api fra gli esagoni del prato, raccogli il nettare
+        che lasci alle spalle e chiudi gli avversari in un angolo.
+      </p>
+      <div class="menu-actions">
+        <button class="btn btn-primary" id="btn-bot">Gioca contro il Bot</button>
+        <button class="btn" id="btn-host">Crea partita LAN</button>
+        <button class="btn" id="btn-join">Entra in LAN</button>
+        <button class="btn btn-ghost" id="btn-rules">Come si gioca</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== LOBBY LAN ===================== -->
+  <section class="screen" id="screen-lobby">
+    <div class="panel">
+      <h2 id="lobby-title">Stanza LAN</h2>
+
+      <!-- Blocco HOST -->
+      <div class="lobby-block" id="lobby-host">
+        <p class="hint">
+          1. Genera il <b>codice invito</b> e invialo a un amico
+          (chat, email, quello che preferisci).
+        </p>
+        <button class="btn btn-small" id="btn-gen-offer">Genera codice invito</button>
+        <div id="offer-wrap" style="display:none; margin-top:12px;">
+          <textarea id="offer-out" readonly rows="3"></textarea>
+          <button class="btn btn-small" id="btn-copy-offer" style="margin-top:8px;">Copia codice invito</button>
+        </div>
+
+        <p class="hint">2. Incolla qui la <b>risposta</b> che ti rimanda indietro.</p>
+        <textarea id="answer-in" placeholder="Incolla qui il codice di risposta…" rows="3"></textarea>
+        <button class="btn btn-small" id="btn-accept-answer" style="margin-top:8px;">Connetti</button>
+      </div>
+
+      <!-- Blocco OSPITE -->
+      <div class="lobby-block" id="lobby-join">
+        <p class="hint">Incolla il <b>codice invito</b> ricevuto dall'host.</p>
+        <textarea id="offer-in" placeholder="Incolla qui il codice invito…" rows="3"></textarea>
+        <button class="btn btn-small" id="btn-make-answer" style="margin-top:8px;">Genera risposta</button>
+
+        <div id="answer-wrap" style="display:none; margin-top:16px;">
+          <p class="hint">Invia questo codice all'host, poi attendi l'avvio della partita.</p>
+          <textarea id="answer-out" readonly rows="3"></textarea>
+          <button class="btn btn-small" id="btn-copy-answer" style="margin-top:8px;">Copia risposta</button>
+        </div>
+      </div>
+
+      <div class="lobby-players" id="lobby-players"></div>
+
+      <div class="lobby-footer">
+        <button class="btn btn-small" id="btn-lobby-back">Indietro</button>
+        <button class="btn btn-primary btn-small" id="btn-start-lan" style="display:none;">Avvia partita</button>
+        <span class="waiting" id="lobby-waiting">In attesa di connessione</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== AREA DI GIOCO ===================== -->
+  <section class="screen" id="screen-game">
+    <div class="game-layout">
+      <header class="hud" id="hud"></header>
+      <div class="board-wrap" id="board-wrap">
+        <canvas id="board"></canvas>
+      </div>
+      <footer class="statusbar">
+        <span id="status-text"></span>
+        <span class="sep">·</span>
+        <span class="legend"><i style="background:#efe3c4"></i>1</span>
+        <span class="legend"><i style="background:#e9d6a2"></i>2</span>
+        <span class="legend"><i style="background:#dfc077"></i>3</span>
+        <span class="legend"><i style="background:#d4a23c"></i>4 dorato</span>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ===================== GAME OVER ===================== -->
+  <section class="screen" id="screen-over">
+    <div class="panel over-panel">
+      <h2 id="over-title">Partita conclusa</h2>
+      <p id="over-sub"></p>
+      <div class="stats" id="over-stats"></div>
+      <div class="menu-actions" style="flex-direction:row; justify-content:center; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btn-rematch">Rivincita</button>
+        <button class="btn" id="btn-back-menu">Menu principale</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ===================== MODALE REGOLE ===================== -->
+<div class="modal" id="modal-rules">
+  <div class="modal-card">
+    <h2>Come si gioca</h2>
+    <ul>
+      <li><b>Obiettivo.</b> Raccogliere più nettare di tutti prima che il prato si esaurisca.</li>
+      <li><b>Il prato.</b> Esagoni con 1, 2 o 3 gocce di nettare. Gli esagoni <b>dorati</b> valgono 4.</li>
+      <li><b>Il turno.</b> Seleziona una tua ape, poi scegli una destinazione: si muove in <b>linea retta</b> lungo una delle 6 direzioni, di quanti esagoni vuoi, purché il percorso sia libero (niente esagoni già raccolti e niente altre api).</li>
+      <li><b>Raccolta.</b> L'esagono che l'ape <b>lascia</b> viene raccolto: incassi il suo nettare e sparisce dal prato.</li>
+      <li><b>Salto.</b> Puoi scavalcare <b>un solo</b> esagono vuoto per atterrare su quello subito dopo. Dopo un salto non puoi proseguire oltre.</li>
+      <li><b>Api bloccate.</b> Se un'ape non ha più mosse legali resta ferma a presidiare il prato.</li>
+      <li><b>Fine partita.</b> Quando tutte le api di tutti i giocatori sono bloccate. Vince chi ha più nettare (a parità, chi ha raccolto più esagoni).</li>
+      <li><b>LAN.</b> Nessun server: l'host genera un codice invito, l'ospite risponde con un codice di risposta. Basta scambiarsi i due testi una volta sola.</li>
+    </ul>
+    <div style="text-align:center;">
+      <button class="btn" id="btn-close-rules">Ho capito</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* =========================================================================
+   1. COSTANTI E UTILITÀ
+   ========================================================================= */
+
+const DIRS = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
+const BOARD_RADIUS = 4;                       // raggio dell'esagono di gioco
+const COLORS       = ['#c4633f','#4f7f97','#7d9b6a','#a9718f'];
+const COLOR_NAMES  = ['Terracotta','Oltremare','Salvia','Malva'];
+const NECTAR_POOL  = [1,1,1,2,2,2,2,3,3,4];   // 4 = esagono dorato
+const BEES_PER_PLAYER = {2:3, 3:2, 4:2};
+const TILE_FILLS   = {1:'#efe3c4', 2:'#e9d6a2', 3:'#dfc077', 4:'#d4a23c'};
+const RTC_CONFIG   = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+const $  = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+const hexKey = (q, r) => q + ',' + r;
+
+/** Converte coordinate assiali in pixel (esagoni pointy-top, size = raggio). */
+function axialToPixel(q, r, size){
+  return {
+    x: size * Math.sqrt(3) * (q + r / 2),
+    y: size * 1.5 * r
+  };
+}
+
+function hexToRgba(hex, a){
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+
+const cloneState = obj =>
+  (typeof structuredClone === 'function')
+    ? structuredClone(obj)
+    : JSON.parse(JSON.stringify(obj));
+
+const easeInOut = t => t < .5 ? 2*t*t : -1 + (4 - 2*t)*t;
+
+/* Codifica/decodifica dei codici di segnalazione WebRTC (base64 UTF-8) */
+function encodeSignal(obj){
+  const bytes = new TextEncoder().encode(JSON.stringify(obj));
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function decodeSignal(str){
+  const clean = str.trim().replace(/\s+/g, '');
+  const bin = atob(clean);
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+/* =========================================================================
+   2. RIFERIMENTI DOM
+   ========================================================================= */
+
+const canvas   = $('#board');
+const ctx      = canvas.getContext('2d');
+const hudEl    = $('#hud');
+const statusEl = $('#status-text');
+const boardWrap= $('#board-wrap');
+
+/* =========================================================================
+   3. STATO GLOBALE
+   ========================================================================= */
+
+const G = {
+  screen: 'menu',        // menu | lobby | game | over
+  mode: 'bot',           // bot | lan
+  isHost: true,
+  localIndex: 0,
+  state: null,
+  botTimer: null,
+
+  ui: {
+    selectedBee: null,
+    moves: [],
+    anim: null,
+    pops: [],
+    lastAnimTurn: -1
+  },
+
+  // LAN — host
+  peers: [],
+  pendingPeer: null,
+  // LAN — ospite
+  pc: null,
+  dc: null
+};
+
+let CW = 0, CH = 0;
+let LAYOUT = { size: 30, ox: 0, oy: 0 };
+
+/* =========================================================================
+   4. REGOLE DEL GIOCO
+   ========================================================================= */
+
+/** Crea un nuovo stato di gioco completo. */
+function createGame(playerDefs){
+  const R = BOARD_RADIUS;
+  const tiles = {};
+
+  for (let q = -R; q <= R; q++){
+    for (let r = Math.max(-R, -q - R); r <= Math.min(R, -q + R); r++){
+      const value = NECTAR_POOL[Math.floor(Math.random() * NECTAR_POOL.length)];
+      tiles[hexKey(q, r)] = { q, r, value, collected: false };
+    }
+  }
+
+  const players = playerDefs.map((p, i) => ({
+    name: p.name,
+    isBot: !!p.isBot,
+    color: COLORS[i % COLORS.length],
+    score: 0,
+    collected: 0
+  }));
+
+  const state = {
+    tiles,
+    players,
+    bees: [],
+    currentPlayer: 0,
+    turn: 0,
+    radius: R,
+    over: false,
+    lastMove: null
+  };
+
+  spawnBees(state);
+  return state;
+}
+
+/**
+ * Posiziona le api sull'anello esterno del prato, distribuite
+ * uniformemente e alternate fra i giocatori, così che nessuna
+ * cella venga mai occupata da più di un'ape.
+ */
+function spawnBees(state){
+  const R = state.radius;
+  const nPlayers = state.players.length;
+  const perPlayer = BEES_PER_PLAYER[nPlayers] || 2;
+  const total = nPlayers * perPlayer;
+
+  const ring = [];
+  for (let q = -R; q <= R; q++){
+    for (let r = Math.max(-R, -q - R); r <= Math.min(R, -q + R); r++){
+      const dist = Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
+      if (dist === R) ring.push({ q, r });
+    }
+  }
+  // ordina l'anello in senso circolare
+  ring.sort((a, b) => {
+    const pa = axialToPixel(a.q, a.r, 1);
+    const pb = axialToPixel(b.q, b.r, 1);
+    return Math.atan2(pa.y, pa.x) - Math.atan2(pb.y, pb.x);
+  });
+
+  let id = 0;
+  for (let i = 0; i < total; i++){
+    const idx = Math.floor(i * ring.length / total) % ring.length;
+    const cell = ring[idx];
+    state.bees.push({
+      id: 'b' + (id++),
+      owner: i % nPlayers,
+      q: cell.q,
+      r: cell.r
+    });
+  }
+}
+
+function tileAt(state, q, r){ return state.tiles[hexKey(q, r)] || null; }
+
+function beeAt(state, q, r){
+  for (const b of state.bees) if (b.q === q && b.r === r) return b;
+  return null;
+}
+
+function hasFreeTile(state, q, r){
+  const t = state.tiles[hexKey(q, r)];
+  return !!t && !t.collected;
+}
+
+/**
+ * Restituisce tutte le mosse legali per un'ape.
+ * Regola del salto: se si incontra un esagono raccolto (o assente),
+ * si può scavalcare un solo buco e atterrare su quello successivo,
+ * ma non si può proseguire oltre.
+ */
+function getMoves(state, bee){
+  const moves = [];
+
+  for (const [dq, dr] of DIRS){
+    let step = 1;
+    while (true){
+      const q = bee.q + dq * step;
+      const r = bee.r + dr * step;
+      const tile = state.tiles[hexKey(q, r)];
+
+      if (!tile) break;                       // fuori dal prato
+
+      if (tile.collected){                    // buco: prova il salto
+        const jq = bee.q + dq * (step + 1);
+        const jr = bee.r + dr * (step + 1);
+        const jt = state.tiles[hexKey(jq, jr)];
+        if (jt && !jt.collected && !beeAt(state, jq, jr)){
+          moves.push({ q: jq, r: jr, jump: true, dq, dr });
+        }
+        break;                                // non si prosegue oltre il buco
+      }
+
+      if (beeAt(state, q, r)) break;          // occupata da un'ape
+
+      moves.push({ q, r, jump: false, dq, dr });
+      step++;
+    }
+  }
+  return moves;
+}
+
+/** Applica una mossa: raccoglie l'esagono di partenza e sposta l'ape. */
+function applyMove(state, beeId, q, r){
+  const bee = state.bees.find(b => b.id === beeId);
+  if (!bee) return null;
+
+  const origin = state.tiles[hexKey(bee.q, bee.r)];
+  const player = state.players[bee.owner];
+
+  player.score     += origin.value;
+  player.collected += 1;
+  origin.collected  = true;
+
+  const move = {
+    id: state.turn,
+    beeId,
+    owner: bee.owner,
+    fq: bee.q, fr: bee.r,
+    tq: q,     tr: r,
+    value: origin.value,
+    color: player.color
+  };
+
+  bee.q = q;
+  bee.r = r;
+  return move;
+}
+
+function anyMovesLeft(state, owner){
+  for (const b of state.bees){
+    if (b.owner === owner && getMoves(state, b).length > 0) return true;
+  }
+  return false;
+}
+
+/** Passa al prossimo giocatore che ha ancora mosse. False = partita finita. */
+function advanceTurn(state){
+  const n = state.players.length;
+  for (let i = 1; i <= n; i++){
+    const p = (state.currentPlayer + i) % n;
+    if (anyMovesLeft(state, p)){
+      state.currentPlayer = p;
+      return true;
+    }
+  }
+  return false;
+}
+
+/* =========================================================================
+   5. INTELLIGENZA ARTIFICIALE (bot)
+   ========================================================================= */
+
+/**
+ * Valuta una mossa con una funzione euristica:
+ *  - nettare immediatamente raccolto
+ *  - mobilità residua dell'ape dopo lo spostamento
+ *  - disturbo arrecato agli avversari
+ * Il rumore casuale aggiunto rende il bot imperfetto, come un umano.
+ */
+function evaluateMove(state, bee, move, playerIndex){
+  const originValue = state.tiles[hexKey(bee.q, bee.r)].value;
+
+  const sim = cloneState(state);
+  applyMove(sim, bee.id, move.q, move.r);
+
+  const movedBee = sim.bees.find(b => b.id === bee.id);
+  const mobility = getMoves(sim, movedBee).length;
+
+  let oppBestGain = 0;
+  let oppMobility = 0;
+  for (const b of sim.bees){
+    if (b.owner === playerIndex) continue;
+    const bMoves = getMoves(sim, b);
+    oppMobility += bMoves.length;
+    if (bMoves.length){
+      const v = sim.tiles[hexKey(b.q, b.r)].value;
+      if (v > oppBestGain) oppBestGain = v;
+    }
+  }
+
+  return originValue * 10
+       + mobility * 2.2
+       - oppBestGain * 2.0
+       - oppMobility * 0.32;
+}
+
+function botChooseMove(state, playerIndex){
+  const options = [];
+  for (const bee of state.bees){
+    if (bee.owner !== playerIndex) continue;
+    for (const m of getMoves(state, bee)) options.push({ bee, move: m });
+  }
+  if (!options.length) return null;
+
+  let best = null;
+  let bestScore = -Infinity;
+  for (const opt of options){
+    // rumore: il bot a volte sceglie una mossa leggermente peggiore
+    const noise = (Math.random() - 0.5) * 8;
+    const score = evaluateMove(state, opt.bee, opt.move, playerIndex) + noise;
+    if (score > bestScore){
+      bestScore = score;
+      best = opt;
+    }
+  }
+  return best;
+}
+
+/* =========================================================================
+   6. RENDERING
+   ========================================================================= */
+
+function recomputeLayout(){
+  const R = BOARD_RADIUS;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+  for (let q = -R; q <= R; q++){
+    for (let r = Math.max(-R, -q - R); r <= Math.min(R, -q + R); r++){
+      const p = axialToPixel(q, r, 1);
+      minX = Math.min(minX, p.x - 0.866);
+      maxX = Math.max(maxX, p.x + 0.866);
+      minY = Math.min(minY, p.y - 1);
+      maxY = Math.max(maxY, p.y + 1);
+    }
+  }
+
+  const w = maxX - minX;
+  const h = maxY - minY;
+  const size = Math.min((CW * 0.94) / w, (CH * 0.94) / h);
+
+  LAYOUT = {
+    size,
+    ox: CW / 2 - ((minX + maxX) / 2) * size,
+    oy: CH / 2 - ((minY + maxY) / 2) * size
+  };
+}
+
+function cellCenter(q, r){
+  const p = axialToPixel(q, r, LAYOUT.size);
+  return { x: p.x + LAYOUT.ox, y: p.y + LAYOUT.oy };
+}
+
+function resizeCanvas(){
+  const rect = boardWrap.getBoundingClientRect();
+  if (rect.width < 10 || rect.height < 10) return;
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width  = Math.round(rect.width  * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+  canvas.style.width  = rect.width  + 'px';
+  canvas.style.height = rect.height + 'px';
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CW = rect.width;
+  CH = rect.height;
+  recomputeLayout();
+}
+
+function drawHexPath(x, y, size){
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++){
+    const a = Math.PI / 180 * (60 * i - 30);
+    const px = x + size * Math.cos(a);
+    const py = y + size * Math.sin(a);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
+
+function drawNectar(x, y, size, value, golden){
+  if (golden){
+    // stella dorata
+    const R1 = size * 0.36, R2 = size * 0.16;
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++){
+      const rad = (i % 2 === 0) ? R1 : R2;
+      const a = -Math.PI / 2 + i * Math.PI / 5;
+      const px = x + Math.cos(a) * rad;
+      const py = y + Math.sin(a) * rad;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = '#8a5a10';
+    ctx.fill();
+    return;
+  }
+
+  // petali disposti in cerchio: il numero di petali = valore
+  const dotR = size * 0.125;
+  const ringR = value === 1 ? 0 : size * 0.215;
+  ctx.fillStyle = '#9c7b3e';
+  for (let i = 0; i < value; i++){
+    const a = -Math.PI / 2 + (i / value) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(a) * ringR, y + Math.sin(a) * ringR, dotR, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawBee(x, y, size, color, blocked, selected, t){
+  const r = size * 0.5;
+
+  ctx.save();
+  if (blocked) ctx.globalAlpha = 0.4;
+
+  // ombra
+  ctx.beginPath();
+  ctx.ellipse(x, y + r * 0.28, r * 0.92, r * 0.68, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(70,58,40,0.16)';
+  ctx.fill();
+
+  // ali
+  ctx.save();
+  ctx.fillStyle = '#fffdf6';
+  ctx.strokeStyle = 'rgba(70,58,40,0.28)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(x - r * 0.52, y - r * 0.82, r * 0.48, r * 0.29, -0.5, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(x + r * 0.52, y - r * 0.82, r * 0.48, r * 0.29, 0.5, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+
+  // corpo
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.lineWidth = Math.max(1.2, size * 0.055);
+  ctx.strokeStyle = '#4a3d2b';
+  ctx.stroke();
+
+  // strisce
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(58,46,30,0.5)';
+  ctx.fillRect(x - r, y - r * 0.06, r * 2, r * 0.24);
+  ctx.fillRect(x - r, y + r * 0.42, r * 2, r * 0.24);
+  ctx.restore();
+
+  // anello di selezione
+  if (selected){
+    const pulse = 0.5 + 0.5 * Math.sin(t / 230);
+    const rr = r * (1.28 + 0.09 * pulse);
+    ctx.beginPath();
+    ctx.arc(x, y, rr, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, rr, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawGame(t){
+  const S = G.state;
+  if (!S) return;
+
+  ctx.clearRect(0, 0, CW, CH);
+  const size = LAYOUT.size;
+  const currentPlayer = S.players[S.currentPlayer];
+  const myTurn = isLocalTurn() && !S.over;
+
+  /* --- esagoni --- */
+  for (const key in S.tiles){
+    const tile = S.tiles[key];
+    const c = cellCenter(tile.q, tile.r);
+
+    if (tile.collected){
+      drawHexPath(c.x, c.y, size * 0.93);
+      ctx.fillStyle = 'rgba(63,54,40,0.035)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(63,54,40,0.055)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      continue;
+    }
+
+    const golden = tile.value >= 4;
+    drawHexPath(c.x, c.y, size * 0.965);
+    ctx.fillStyle = TILE_FILLS[tile.value] || '#efe3c4';
+    ctx.fill();
+    ctx.strokeStyle = golden ? '#a87a1e' : 'rgba(122,96,54,0.26)';
+    ctx.lineWidth = golden ? 2 : 1.2;
+    ctx.stroke();
+
+    drawNectar(c.x, c.y, size, tile.value, golden);
+  }
+
+  /* --- destinazioni legali --- */
+  if (myTurn && G.ui.selectedBee){
+    const pulse = 0.5 + 0.5 * Math.sin(t / 300);
+    for (const m of G.ui.moves){
+      const c = cellCenter(m.q, m.r);
+      drawHexPath(c.x, c.y, size * 0.8);
+      ctx.fillStyle = hexToRgba(currentPlayer.color, 0.16 + 0.13 * pulse);
+      ctx.fill();
+      ctx.strokeStyle = hexToRgba(currentPlayer.color, 0.8);
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+
+      if (m.jump){
+        // indicatore di salto: doppio cerchio
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, size * 0.16, 0, Math.PI * 2);
+        ctx.strokeStyle = hexToRgba(currentPlayer.color, 0.95);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+  }
+
+  /* --- api --- */
+  for (const bee of S.bees){
+    if (G.ui.anim && G.ui.anim.beeId === bee.id) continue;
+    const c = cellCenter(bee.q, bee.r);
+    const owner = S.players[bee.owner];
+    const blocked = getMoves(S, bee).length === 0;
+    drawBee(c.x, c.y, size, owner.color, blocked,
+            G.ui.selectedBee === bee.id, t);
+  }
+
+  /* --- animazione dello spostamento --- */
+  if (G.ui.anim){
+    const a = G.ui.anim;
+    const p = Math.min(1, (t - a.start) / a.dur);
+    const e = easeInOut(p);
+    const x = a.fromX + (a.toX - a.fromX) * e;
+    const y = a.fromY + (a.toY - a.fromY) * e;
+    const hop = Math.sin(p * Math.PI) * size * 0.4;
+    const owner = S.players[a.owner];
+    drawBee(x, y - hop, size, owner.color, false, false, t);
+    if (p >= 1) G.ui.anim = null;
+  }
+
+  /* --- "pop" dell'esagono raccolto + punteggio fluttuante --- */
+  G.ui.pops = G.ui.pops.filter(p => t - p.start < p.dur);
+  for (const pop of G.ui.pops){
+    const k = (t - pop.start) / pop.dur;
+    const alpha = 1 - k;
+
+    drawHexPath(pop.x, pop.y, size * (0.9 + k * 0.55));
+    ctx.strokeStyle = hexToRgba(pop.color, alpha * 0.85);
+    ctx.lineWidth = 2.5 * (1 - k) + 0.5;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = `600 ${Math.round(size * 0.62)}px Georgia, serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = pop.golden ? '#8a5a10' : '#5a4a30';
+    ctx.fillText('+' + pop.value, pop.x, pop.y - size * 0.55 - k * size * 0.9);
+    ctx.restore();
+  }
+}
+
+/* =========================================================================
+   7. LOOP DI RENDERING
+   ========================================================================= */
+
+function loop(t){
+  if (G.screen === 'game' && G.state) drawGame(t);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* =========================================================================
+   8. GESTIONE DEI TURNI
+   ========================================================================= */
+
+function localPlayerIndex(){
+  return G.mode === 'bot' ? 0 : G.localIndex;
+}
+
+function isLocalTurn(){
+  if (!G.state) return false;
+  return G.state.currentPlayer === localPlayerIndex();
+}
+
+function selectBee(bee){
+  G.ui.selectedBee = bee.id;
+  G.ui.moves = getMoves(G.state, bee);
+  const n = G.ui.moves.length;
+  setStatus(`Ape selezionata — ${n} ${n === 1 ? 'mossa disponibile' : 'mosse disponibili'}`);
+}
+
+function autoSelectBee(){
+  if (!isLocalTurn() || G.state.over) return;
+  const S = G.state;
+  const mine = S.bees.filter(b => b.owner === S.currentPlayer);
+  const withMoves = mine.filter(b => getMoves(S, b).length > 0);
+  if (withMoves.length > 0){
+    selectBee(withMoves[0]);
+  } else {
+    G.ui.selectedBee = null;
+    G.ui.moves = [];
+  }
+}
+
+function scheduleTurn(){
+  clearTimeout(G.botTimer);
+  const S = G.state;
+  if (!S || S.over) return;
+
+  const cur = S.players[S.currentPlayer];
+
+  if (cur.isBot){
+    setStatus(`${cur.name} sta pensando…`);
+    G.ui.selectedBee = null;
+    G.ui.moves = [];
+    G.botTimer = setTimeout(() => {
+      if (G.state !== S || S.over) return;
+      botPlay(S);
+    }, 620 + Math.random() * 780);
+    return;
+  }
+
+  if (isLocalTurn()){
+    autoSelectBee();
+  } else {
+    G.ui.selectedBee = null;
+    G.ui.moves = [];
+    setStatus(`Turno di ${cur.name}…`);
+  }
+}
+
+function botPlay(state){
+  const choice = botChooseMove(state, state.currentPlayer);
+  if (!choice){
+    if (!advanceTurn(state)){ endGame(); return; }
+    updateHud();
+    broadcastState();
+    scheduleTurn();
+    return;
+  }
+  performMove(choice.bee.id, choice.move.q, choice.move.r);
+}
+
+/** Esegue una mossa localmente (host o partita contro il bot). */
+function performMove(beeId, q, r){
+  const S = G.state;
+  if (!S || S.over) return;
+
+  const bee = S.bees.find(b => b.id === beeId);
+  if (!bee) return;
+
+  const legal = getMoves(S, bee).some(m => m.q === q && m.r === r);
+  if (!legal) return;
+
+  const from = cellCenter(bee.q, bee.r);
+  const to   = cellCenter(q, r);
+
+  const moveData = applyMove(S, beeId, q, r);
+  S.turn++;
+  S.lastMove = moveData;
+
+  // animazioni
+  G.ui.anim = {
+    beeId,
+    fromX: from.x, fromY: from.y,
+    toX: to.x,     toY: to.y,
+    start: performance.now(),
+    dur: 265,
+    owner: moveData.owner
+  };
+  G.ui.pops.push({
+    x: from.x, y: from.y,
+    start: performance.now(),
+    dur: 460,
+    value: moveData.value,
+    golden: moveData.value >= 4,
+    color: moveData.color
+  });
+  G.ui.selectedBee = null;
+  G.ui.moves = [];
+
+  const someoneHasMoves = advanceTurn(S);
+  updateHud();
+  broadcastState();
+
+  if (!someoneHasMoves){ endGame(); return; }
+  scheduleTurn();
+}
+
+/** Invia la mossa: al host se siamo ospiti, altrimenti esegue. */
+function submitMove(beeId, q, r){
+  if (G.mode === 'lan' && !G.isHost){
+    sendToHost({ t: 'action', beeId, q, r });
+    G.ui.selectedBee = null;
+    G.ui.moves = [];
+    setStatus('Mossa inviata — in attesa dell\'host…');
+    return;
+  }
+  performMove(beeId, q, r);
+}
+
+function endGame(){
+  clearTimeout(G.botTimer);
+  const S = G.state;
+  if (!S) return;
+  S.over = true;
+  G.ui.selectedBee = null;
+  G.ui.moves = [];
+  updateHud();
+  broadcastState();
+  showResults();
+}
+
+/* =========================================================================
+   9. INPUT
+   ========================================================================= */
+
+function hitTest(px, py){
+  const S = G.state;
+  if (!S) return null;
+
+  let best = null;
+  let bestDist = Infinity;
+  for (const key in S.tiles){
+    const tile = S.tiles[key];
+    const c = cellCenter(tile.q, tile.r);
+    const d = (c.x - px) * (c.x - px) + (c.y - py) * (c.y - py);
+    if (d < bestDist){ bestDist = d; best = tile; }
+  }
+  const limit = (LAYOUT.size * 0.98) * (LAYOUT.size * 0.98);
+  return bestDist <= limit ? best : null;
+}
+
+function canvasPoint(ev){
+  const rect = canvas.getBoundingClientRect();
+  const src = ev.touches && ev.touches[0] ? ev.touches[0] : ev;
+  return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+}
+
+function onCanvasPointer(ev){
+  if (G.screen !== 'game' || !G.state) return;
+  if (G.state.over) return;
+  if (!isLocalTurn()) return;
+  if (G.ui.anim) return;
+
+  const { x, y } = canvasPoint(ev);
+  const tile = hitTest(x, y);
+  if (!tile) return;
+
+  const S = G.state;
+
+  // 1) è una destinazione valida?
+  if (G.ui.selectedBee){
+    const dest = G.ui.moves.find(m => m.q === tile.q && m.r === tile.r);
+    if (dest){ submitMove(G.ui.selectedBee, tile.q, tile.r); return; }
+  }
+
+  // 2) è una mia ape?
+  const bee = S.bees.find(b => b.q === tile.q && b.r === tile.r);
+  if (bee && bee.owner === S.currentPlayer && bee.owner === localPlayerIndex()){
+    if (getMoves(S, bee).length > 0) selectBee(bee);
+    else setStatus('Questa ape è bloccata: non ha mosse legali.');
+  }
+}
+
+canvas.addEventListener('click', onCanvasPointer);
+canvas.addEventListener('touchstart', ev => { ev.preventDefault(); onCanvasPointer(ev); }, { passive: false });
+
+/* =========================================================================
+   10. INTERFACCIA — HUD E SCHERMATE
+   ========================================================================= */
+
+function setStatus(text){ statusEl.textContent = text; }
+
+function updateHud(){
+  const S = G.state;
+  if (!S) return;
+  hudEl.innerHTML = S.players.map((p, i) => `
+    <div class="chip ${i === S.currentPlayer && !S.over ? 'active' : ''} ${p.isBot ? 'bot' : ''}">
+      <span class="dot" style="background:${p.color}"></span>
+      <span class="pname">${escapeHtml(p.name)}</span>
+      <span class="pscore">${p.score}</span>
+    </div>
+  `).join('');
+}
+
+function showScreen(id){
+  $$('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  G.screen = id.replace('screen-', '');
+}
+
+function showResults(){
+  const S = G.state;
+  if (!S) return;
+
+  const rows = S.players.map((p, i) => ({ ...p, idx: i }));
+  rows.sort((a, b) => (b.score - a.score) || (b.collected - a.collected));
+
+  const topScore = rows[0].score;
+  const winners = rows.filter(p => p.score === topScore);
+
+  const title = winners.length > 1
+    ? 'Pareggio!'
+    : `${winners[0].name} vince!`;
+
+  $('#over-title').textContent = title;
+  $('#over-sub').textContent =
+    `${S.turn} mosse · ${rows.reduce((a, p) => a + p.collected, 0)} esagoni raccolti`;
+
+  $('#over-stats').innerHTML = rows.map((p, i) => `
+    <div class="stat-row ${p.score === topScore ? 'win' : ''}" style="animation-delay:${i * 70}ms">
+      <span class="who">
+        <span class="dot" style="background:${p.color}"></span>
+        ${escapeHtml(p.name)}
+      </span>
+      <span class="col">
+        <span class="lbl">Nettare</span>
+        <span class="val">${p.score}</span>
+      </span>
+      <span class="col">
+        <span class="lbl">Esagoni</span>
+        <span class="val">${p.collected}</span>
+      </span>
+    </div>
+  `).join('');
+
+  showScreen('screen-over');
+}
+
+/* =========================================================================
+   11. AVVIO PARTITE
+   ========================================================================= */
+
+function startBotGame(){
+  G.mode = 'bot';
+  G.isHost = true;
+  G.localIndex = 0;
+  G.state = createGame([
+    { name: 'Tu', isBot: false },
+    { name: 'Ape Bot', isBot: true }
+  ]);
+  G.ui.selectedBee = null;
+  G.ui.moves = [];
+  G.ui.anim = null;
+  G.ui.pops = [];
+  G.ui.lastAnimTurn = -1;
+
+  showScreen('screen-game');
+  requestAnimationFrame(() => {
+    resizeCanvas();
+    updateHud();
+    scheduleTurn();
+  });
+}
+
+function restartBotGame(){
+  startBotGame();
+}
+
+/* =========================================================================
+   12. RETE — WEBRTC P2P (host autoritario)
+   ========================================================================= */
+
+function waitForIce(pc){
+  if (pc.iceGatheringState === 'complete') return Promise.resolve();
+  return new Promise(resolve => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      pc.removeEventListener('icegatheringstatechange', onChange);
+      resolve();
+    };
+    const onChange = () => { if (pc.iceGatheringState === 'complete') finish(); };
+    pc.addEventListener('icegatheringstatechange', onChange);
+    setTimeout(finish, 2600); // fallback di sicurezza
+  });
+}
+
+/* ------------------------- HOST ------------------------- */
+
+async function hostGenerateOffer(){
+  const btn = $('#btn-gen-offer');
+  btn.disabled = true;
+  btn.textContent = 'Preparazione…';
+
+  try {
+    const pc = new RTCPeerConnection(RTC_CONFIG);
+    const dc = pc.createDataChannel('game', { ordered: true });
+    const peer = { pc, dc, connected: false, index: -1, gameIndex: -1, name: 'Ospite' };
+    G.pendingPeer = peer;
+
+    dc.onopen = () => {
+      peer.connected = true;
+      G.peers.push(peer);
+      if (G.pendingPeer === peer) G.pendingPeer = null;
+      updateLobbyPlayers();
+      setLobbyWaiting('Ospite connesso. Puoi aggiungerne un altro o avviare.');
+    };
+    dc.onmessage = ev => hostOnMessage(peer, ev.data);
+    dc.onclose = () => {
+      peer.connected = false;
+      G.peers = G.peers.filter(p => p !== peer);
+      updateLobbyPlayers();
+    };
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    await waitForIce(pc);
+
+    const code = encodeSignal({ type: 'offer', sdp: pc.localDescription.sdp });
+    $('#offer-out').value = code;
+    $('#offer-wrap').style.display = 'block';
+    setLobbyWaiting('In attesa della risposta dell\'ospite');
+  } catch (err){
+    console.error(err);
+    setLobbyWaiting('Errore nella creazione dell\'invito. Riprova.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Genera un altro invito';
+  }
+}
+
+async function hostAcceptAnswer(){
+  const peer = G.pendingPeer;
+  if (!peer){
+    setLobbyWaiting('Prima genera un codice invito.');
+    return;
+  }
+  const raw = $('#answer-in').value.trim();
+  if (!raw){
+    setLobbyWaiting('Incolla prima il codice di risposta.');
+    return;
+  }
+  try {
+    const sig = decodeSignal(raw);
+    await peer.pc.setRemoteDescription({ type: 'answer', sdp: sig.sdp });
+    $('#answer-in').value = '';
+    $('#offer-wrap').style.display = 'none';
+    setLobbyWaiting('Connessione in corso');
+  } catch (err){
+    console.error(err);
+    setLobbyWaiting('Codice di risposta non valido.');
+  }
+}
+
+function hostOnMessage(peer, raw){
+  let msg;
+  try { msg = JSON.parse(raw); } catch (e){ return; }
+
+  if (msg.t === 'hello'){
+    peer.name = String(msg.name || 'Ospite').slice(0, 18);
+    if (peer.index < 0){
+      const used = new Set(G.peers.filter(p => p !== peer && p.index >= 0).map(p => p.index));
+      let idx = 1;
+      while (used.has(idx)) idx++;
+      peer.index = idx;
+    }
+    try {
+      peer.dc.send(JSON.stringify({ t: 'welcome', index: peer.index }));
+    } catch (e){ /* ignora */ }
+    updateLobbyPlayers();
+    return;
+  }
+
+  if (msg.t === 'action'){
+    const S = G.state;
+    if (!S || S.over) return;
+    if (S.currentPlayer !== peer.gameIndex) return;
+
+    const bee = S.bees.find(b => b.id === msg.beeId);
+    if (!bee || bee.owner !== peer.gameIndex) return;
+
+    const ok = getMoves(S, bee).some(m => m.q === msg.q && m.r === msg.r);
+    if (!ok) return;
+
+    performMove(msg.beeId, msg.q, msg.r);
+    return;
+  }
+
+  if (msg.t === 'rematch'){
+    if (G.isHost) startLanGame();
+  }
+}
+
+function broadcastState(){
+  if (G.mode !== 'lan' || !G.isHost || !G.state) return;
+  const payload = JSON.stringify({ t: 'state', state: G.state });
+  for (const p of G.peers){
+    if (p.dc && p.dc.readyState === 'open'){
+      try { p.dc.send(payload); } catch (e){ /* ignora */ }
+    }
+  }
+}
+
+function updateLobbyPlayers(){
+  const el = $('#lobby-players');
+  if (!el) return;
+
+  if (G.isHost){
+    const items = [`
+      <div class="chip active">
+        <span class="dot" style="background:${COLORS[0]}"></span>
+        <span class="pname">Tu (Host)</span>
+      </div>`];
+    const guests = G.peers.filter(p => p.connected).sort((a, b) => a.index - b.index);
+    guests.forEach((g, i) => {
+      items.push(`
+        <div class="chip">
+          <span class="dot" style="background:${COLORS[(i + 1) % COLORS.length]}"></span>
+          <span class="pname">${escapeHtml(g.name)}</span>
+        </div>`);
+    });
+    el.innerHTML = items.join('');
+
+    const canStart = guests.length >= 1;
+    $('#btn-start-lan').style.display = 'inline-block';
+    $('#btn-start-lan').disabled = !canStart;
+    if (canStart) setLobbyWaiting(`${guests.length} ospite/i pronto/i`);
+  } else {
+    el.innerHTML = `
+      <div class="chip">
+        <span class="dot" style="background:${COLORS[G.localIndex % COLORS.length]}"></span>
+        <span class="pname">Tu (Ospite)</span>
+      </div>`;
+  }
+}
+
+function setLobbyWaiting(text){
+  const w = $('#lobby-waiting');
+  if (w) w.textContent = text;
+}
+
+/* ------------------------- OSPITE ------------------------- */
+
+async function guestMakeAnswer(){
+  const btn = $('#btn-make-answer');
+  const raw = $('#offer-in').value.trim();
+  if (!raw){
+    setLobbyWaiting('Incolla prima il codice invito.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Preparazione…';
+
+  try {
+    const sig = decodeSignal(raw);
+    const pc = new RTCPeerConnection(RTC_CONFIG);
+    G.pc = pc;
+
+    pc.ondatachannel = ev => {
+      const dc = ev.channel;
+      G.dc = dc;
+      dc.onopen = () => {
+        try { dc.send(JSON.stringify({ t: 'hello', name: 'Ospite' })); } catch (e){}
+        setLobbyWaiting('Connesso! In attesa che l\'host avvii la partita');
+      };
+      dc.onmessage = ev2 => clientOnMessage(ev2.data);
+      dc.onclose = () => setLobbyWaiting('Connessione chiusa.');
+    };
+
+    await pc.setRemoteDescription({ type: 'offer', sdp: sig.sdp });
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    await waitForIce(pc);
+
+    const code = encodeSignal({ type: 'answer', sdp: pc.localDescription.sdp });
+    $('#answer-out').value = code;
+    $('#answer-wrap').style.display = 'block';
+    setLobbyWaiting('Invia il codice di risposta all\'host');
+  } catch (err){
+    console.error(err);
+    setLobbyWaiting('Codice invito non valido.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Genera risposta';
+  }
+}
+
+function sendToHost(obj){
+  if (G.dc && G.dc.readyState === 'open'){
+    try { G.dc.send(JSON.stringify(obj)); } catch (e){ /* ignora */ }
+  }
+}
+
+function clientOnMessage(raw){
+  let msg;
+  try { msg = JSON.parse(raw); } catch (e){ return; }
+
+  if (msg.t === 'welcome'){
+    G.localIndex = msg.index;
+    updateLobbyPlayers();
+    return;
+  }
+
+  if (msg.t === 'start'){
+    G.state = msg.state;
+    G.localIndex = msg.index;
+    G.mode = 'lan';
+    G.isHost = false;
+    G.ui.selectedBee = null;
+    G.ui.moves = [];
+    G.ui.anim = null;
+    G.ui.pops = [];
+    G.ui.lastAnimTurn = -1;
+
+    showScreen('screen-game');
+    requestAnimationFrame(() => {
+      resizeCanvas();
+      updateHud();
+      scheduleTurn();
+    });
+    return;
+  }
+
+  if (msg.t === 'state'){
+    const prevOver = G.state ? G.state.over : false;
+    G.state = msg.state;
+    G.ui.selectedBee = null;
+    G.ui.moves = [];
+
+    // animazione dell'ultima mossa ricevuta
+    const lm = G.state.lastMove;
+    if (lm && lm.id !== G.ui.lastAnimTurn){
+      G.ui.lastAnimTurn = lm.id;
+      const from = cellCenter(lm.fq, lm.fr);
+      const to   = cellCenter(lm.tq, lm.tr);
+      G.ui.anim = {
+        beeId: lm.beeId,
+        fromX: from.x, fromY: from.y,
+        toX: to.x,     toY: to.y,
+        start: performance.now(),
+        dur: 265,
+        owner: lm.owner
+      };
+      G.ui.pops.push({
+        x: from.x, y: from.y,
+        start: performance.now(),
+        dur: 460,
+        value: lm.value,
+        golden: lm.value >= 4,
+        color: lm.color
+      });
+    }
+
+    updateHud();
+    if (G.state.over){
+      if (!prevOver) showResults();
+    } else {
+      scheduleTurn();
+    }
+  }
+}
+
+/* ------------------------- AVVIO PARTITA LAN ------------------------- */
+
+function startLanGame(){
+  const guests = G.peers.filter(p => p.connected);
+  guests.sort((a, b) => a.index - b.index);
+
+  const defs = [{ name: 'Host', isBot: false }];
+  guests.forEach((g, i) => {
+    g.gameIndex = i + 1;
+    defs.push({ name: g.name || ('Ospite ' + (i + 1)), isBot: false });
+  });
+
+  G.mode = 'lan';
+  G.isHost = true;
+  G.localIndex = 0;
+  G.state = createGame(defs);
+  G.ui.selectedBee = null;
+  G.ui.moves = [];
+  G.ui.anim = null;
+  G.ui.pops = [];
+  G.ui.lastAnimTurn = -1;
+
+  showScreen('screen-game');
+  requestAnimationFrame(() => {
+    resizeCanvas();
+    updateHud();
+    scheduleTurn();
+  });
+
+  const payload = JSON.stringify({ t: 'start', state: G.state });
+  for (const g of guests){
+    if (g.dc && g.dc.readyState === 'open'){
+      try {
+        g.dc.send(JSON.stringify({ t: 'start', index: g.gameIndex, state: G.state }));
+      } catch (e){ /* ignora */ }
+    }
+  }
+}
+
+/* =========================================================================
+   13. COLLEGAMENTO EVENTI UI
+   ========================================================================= */
+
+/* --- Menu principale --- */
+$('#btn-bot').addEventListener('click', startBotGame);
+
+$('#btn-host').addEventListener('click', () => {
+  G.mode = 'lan';
+  G.isHost = true;
+  G.peers = [];
+  G.pendingPeer = null;
+
+  $('#lobby-title').textContent = 'Crea una stanza LAN';
+  $('#lobby-host').classList.add('on');
+  $('#lobby-join').classList.remove('on');
+  $('#offer-wrap').style.display = 'none';
+  $('#offer-out').value = '';
+  $('#answer-in').value = '';
+  $('#btn-gen-offer').textContent = 'Genera codice invito';
+  $('#btn-start-lan').style.display = 'none';
+  setLobbyWaiting('In attesa di connessione');
+
+  updateLobbyPlayers();
+  showScreen('screen-lobby');
+});
+
+$('#btn-join').addEventListener('click', () => {
+  G.mode = 'lan';
+  G.isHost = false;
+
+  $('#lobby-title').textContent = 'Entra in una stanza LAN';
+  $('#lobby-host').classList.remove('on');
+  $('#lobby-join').classList.add('on');
+  $('#answer-wrap').style.display = 'none';
+  $('#offer-in').value = '';
+  $('#answer-out').value = '';
+  $('#btn-start-lan').style.display = 'none';
+  setLobbyWaiting('In attesa dell\'host');
+
+  updateLobbyPlayers();
+  showScreen('screen-lobby');
+});
+
+/* --- Lobby: host --- */
+$('#btn-gen-offer').addEventListener('click', hostGenerateOffer);
+$('#btn-accept-answer').addEventListener('click', hostAcceptAnswer);
+
+$('#btn-copy-offer').addEventListener('click', () => {
+  const ta = $('#offer-out');
+  ta.select();
+  navigator.clipboard?.writeText(ta.value).catch(() => document.execCommand('copy'));
+  $('#btn-copy-offer').textContent = 'Copiato!';
+  setTimeout(() => { $('#btn-copy-offer').textContent = 'Copia codice invito'; }, 1400);
+});
+
+/* --- Lobby: ospite --- */
+$('#btn-make-answer').addEventListener('click', guestMakeAnswer);
+
+$('#btn-copy-answer').addEventListener('click', () => {
+  const ta = $('#answer-out');
+  ta.select();
+  navigator.clipboard?.writeText(ta.value).catch(() => document.execCommand('copy'));
+  $('#btn-copy-answer').textContent = 'Copiato!';
+  setTimeout(() => { $('#btn-copy-answer').textContent = 'Copia risposta'; }, 1400);
+});
+
+/* --- Lobby: navigazione --- */
+$('#btn-lobby-back').addEventListener('click', () => {
+  if (G.dc){ try { G.dc.close(); } catch (e){} G.dc = null; }
+  if (G.pc){ try { G.pc.close(); } catch (e){} G.pc = null; }
+  for (const p of G.peers){ try { p.pc.close(); } catch (e){} }
+  G.peers = [];
+  G.pendingPeer = null;
+  clearTimeout(G.botTimer);
+  showScreen('screen-menu');
+});
+
+$('#btn-start-lan').addEventListener('click', () => {
+  if (G.isHost) startLanGame();
+});
+
+/* --- Regole --- */
+$('#btn-rules').addEventListener('click', () => $('#modal-rules').classList.add('on'));
+$('#btn-close-rules').addEventListener('click', () => $('#modal-rules').classList.remove('on'));
+$('#modal-rules').addEventListener('click', ev => {
+  if (ev.target === $('#modal-rules')) $('#modal-rules').classList.remove('on');
+});
+
+/* --- Game over --- */
+$('#btn-rematch').addEventListener('click', () => {
+  clearTimeout(G.botTimer);
+
+  if (G.mode === 'bot'){
+    restartBotGame();
+    return;
+  }
+
+  if (G.isHost){
+    // se ci sono ospiti connessi, riavvia per tutti
+    const connected = G.peers.filter(p => p.connected);
+    if (connected.length > 0){
+      startLanGame();
+    } else {
+      restartBotGame();
+    }
+  } else {
+    sendToHost({ t: 'rematch' });
+    $('#over-sub').textContent = 'Richiesta di rivincita inviata all\'host…';
+  }
+});
+
+$('#btn-back-menu').addEventListener('click', () => {
+  clearTimeout(G.botTimer);
+  G.state = null;
+  showScreen('screen-menu');
+});
+
+/* --- Ridimensionamento --- */
+window.addEventListener('resize', () => {
+  if (G.screen === 'game') resizeCanvas();
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => { if (G.screen === 'game') resizeCanvas(); }, 250);
+});
+if (typeof ResizeObserver !== 'undefined'){
+  new ResizeObserver(() => {
+    if (G.screen === 'game') resizeCanvas();
+  }).observe(boardWrap);
+}
+
+/* =========================================================================
+   14. AVVIO
+   ========================================================================= */
+
+// piccola attesa per essere certi che i font di sistema siano applicati
+requestAnimationFrame(() => {
+  resizeCanvas();
+  showScreen('screen-menu');
+});
+
+})();
+</script>
+</body>
+</html>
